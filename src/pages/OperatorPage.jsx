@@ -1,20 +1,55 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
+
+// Timer Edit Component
+const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
+  const [minutes, setMinutes] = useState(Math.floor(currentSeconds / 60));
+  const [seconds, setSeconds] = useState(currentSeconds % 60);
+
+  const handleSave = () => {
+    const totalSeconds = parseInt(minutes, 10) * 60 + parseInt(seconds, 10);
+    onSave(totalSeconds);
+  };
+
+  return (
+    <div className="timer-editor">
+      <input
+        type="number"
+        value={minutes}
+        onChange={(e) => setMinutes(e.target.value)}
+        min="0"
+        max="59"
+      />
+      <span>:</span>
+      <input
+        type="number"
+        value={seconds}
+        onChange={(e) => setSeconds(e.target.value)}
+        min="0"
+        max="59"
+      />
+      <button onClick={handleSave} className="btn-save-time">
+        Save
+      </button>
+      <button onClick={onCancel} className="btn-cancel-time">
+        Cancel
+      </button>
+    </div>
+  );
+};
 
 const OperatorPage = () => {
   const {
     matchState,
     changeScore,
     changeGamJeom,
+    setTimer,
     toggleTimer,
     endRoundAndAwardWinner,
     resetMatch,
-    setTimerManually,
   } = useMatch();
-
-  const openDisplayWindow = () =>
-    window.open("/display", "_blank", "noopener,noreferrer");
+  const [isEditingTime, setIsEditingTime] = useState(false);
 
   const FormattedTimer = ({ seconds }) => {
     const minutes = Math.floor(seconds / 60);
@@ -22,12 +57,11 @@ const OperatorPage = () => {
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const { notification } = matchState;
-
   return (
     <>
       <div className="operator-panel">
         <h1>Taekwondo Scoreboard Controls</h1>
+        {/* ... (Header and Main Controls remain the same) ... */}
         <h2 className="match-score-header">
           <span style={{ color: "#007bff" }}>BLUE</span>{" "}
           <span style={{ color: "#007bff", fontSize: "2.5rem" }}>
@@ -39,9 +73,13 @@ const OperatorPage = () => {
           </span>{" "}
           <span style={{ color: "#dc3545" }}>RED</span>
         </h2>
-
         <div className="main-controls">
-          <button className="btn-open" onClick={openDisplayWindow}>
+          <button
+            className="btn-open"
+            onClick={() =>
+              window.open("/display", "_blank", "noopener,noreferrer")
+            }
+          >
             Open Display
           </button>
           <button
@@ -68,9 +106,8 @@ const OperatorPage = () => {
         {matchState.winner && (
           <h1 className="final-winner-text">WINNER: {matchState.winner}</h1>
         )}
-
         <div className="control-section">
-          {/* Blue Player Controls */}
+          {/* ... (Blue Player Controls remain the same, but use 'changeScore' and 'changeGamJeom') ... */}
           <div className="player-controls">
             <h2 style={{ color: "#007bff" }}>BLUE PLAYER</h2>
             <div className="status-display blue-op">
@@ -120,24 +157,35 @@ const OperatorPage = () => {
             </div>
           </div>
 
-          {/* Center Timer Display */}
+          {/* Center Timer Display with Edit functionality */}
           <div className="player-controls">
             <h2>TIMER</h2>
-            <div
-              style={{ fontSize: "5rem", margin: "20px 0", fontWeight: "bold" }}
-            >
-              <FormattedTimer seconds={matchState.timer} />
-            </div>
-            <button
-              className="btn-edit-time"
-              onClick={setTimerManually}
-              disabled={matchState.status === "FINISHED"}
-            >
-              Edit Time
-            </button>
+            {isEditingTime ? (
+              <TimerEditor
+                currentSeconds={matchState.timer}
+                onSave={(newTotalSeconds) => {
+                  setTimer(newTotalSeconds);
+                  setIsEditingTime(false);
+                }}
+                onCancel={() => setIsEditingTime(false)}
+              />
+            ) : (
+              <>
+                <div className="timer-display-op">
+                  <FormattedTimer seconds={matchState.timer} />
+                </div>
+                <button
+                  className="btn-edit-time"
+                  onClick={() => setIsEditingTime(true)}
+                  disabled={matchState.status === "FINISHED"}
+                >
+                  Edit Time
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Red Player Controls */}
+          {/* ... (Red Player Controls remain the same, but use 'changeScore' and 'changeGamJeom') ... */}
           <div className="player-controls">
             <h2 style={{ color: "#dc3545" }}>RED PLAYER</h2>
             <div className="status-display red-op">
@@ -188,13 +236,12 @@ const OperatorPage = () => {
           </div>
         </div>
       </div>
-
       <div
-        className={`notification ${notification.type} ${
-          notification.visible ? "show" : ""
+        className={`notification ${matchState.notification.type} ${
+          matchState.notification.visible ? "show" : ""
         }`}
       >
-        {notification.message}
+        {matchState.notification.message}
       </div>
     </>
   );

@@ -14,23 +14,30 @@ export const MatchProvider = ({ children }) => {
     round: 1,
     timer: 120,
     isTimerRunning: false,
-    blue: { name: "BLUE", score: 0, gamJeom: 0, roundWins: 0 },
-    red: { name: "RED", score: 0, gamJeom: 0, roundWins: 0 },
+    blue: {
+      name: "BLUE",
+      score: 0,
+      gamJeom: 0,
+      roundWins: 0,
+      pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    },
+    red: {
+      name: "RED",
+      score: 0,
+      gamJeom: 0,
+      roundWins: 0,
+      pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    },
     status: "PRE_MATCH",
     winner: null,
-    // این خط مهم‌ترین بخش برای رفع خطای شماست
     notification: { message: "", type: "info", visible: false },
   };
 
   const [matchState, setMatchState] = useState(() => {
     const savedState = localStorage.getItem("matchState");
-    // یک بررسی اضافه شده تا اگر ساختار state قدیمی بود، از نو ساخته شود
     if (savedState) {
-      const parsedState = JSON.parse(savedState);
-      if (parsedState.notification) {
-        // Check if the notification object exists
-        return parsedState;
-      }
+      const parsed = JSON.parse(savedState);
+      if (parsed.blue && parsed.blue.pointsBreakdown) return parsed;
     }
     return initialState;
   });
@@ -38,11 +45,13 @@ export const MatchProvider = ({ children }) => {
   const timerRef = useRef(null);
   const notificationTimerRef = useRef(null);
 
+  // All useEffect hooks remain the same
   useEffect(() => {
     if (matchState.isTimerRunning && matchState.timer > 0) {
-      timerRef.current = setInterval(() => {
-        setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 }));
-      }, 1000);
+      timerRef.current = setInterval(
+        () => setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 })),
+        1000
+      );
     } else if (matchState.timer <= 0 && matchState.isTimerRunning) {
       setMatchState((prev) => ({
         ...prev,
@@ -58,6 +67,7 @@ export const MatchProvider = ({ children }) => {
     channel.postMessage(matchState);
   }, [matchState]);
 
+  // All action functions up to endRoundAndAwardWinner remain the same
   const setNotification = (message, type = "info", duration = 4000) => {
     clearTimeout(notificationTimerRef.current);
     setMatchState((prev) => ({
@@ -71,24 +81,33 @@ export const MatchProvider = ({ children }) => {
       }));
     }, duration);
   };
-
-  const changeScore = (player, amount) => {
-    if (matchState.status === "FINISHED") return;
-    setMatchState((prev) => ({
-      ...prev,
-      [player]: {
-        ...prev[player],
-        score: Math.max(0, prev[player].score + amount),
-      },
-    }));
+  const changeScore = (player, points) => {
+    if (matchState.status === "FINISHED" || points === 0) return;
+    setMatchState((prev) => {
+      const newScore = Math.max(0, prev[player].score + points);
+      const newBreakdown = { ...prev[player].pointsBreakdown };
+      if (points > 0 && newBreakdown[points] !== undefined) {
+        newBreakdown[points]++;
+      }
+      // This part handles correction for score removal, though it's an approximation
+      if (points < 0 && newBreakdown[-points] !== undefined) {
+        newBreakdown[-points] = Math.max(0, newBreakdown[-points] - 1);
+      }
+      return {
+        ...prev,
+        [player]: {
+          ...prev[player],
+          score: newScore,
+          pointsBreakdown: newBreakdown,
+        },
+      };
+    });
   };
-
   const changeGamJeom = (player, amount) => {
     if (matchState.status === "FINISHED") return;
     const opponent = player === "blue" ? "red" : "blue";
     const currentGamJeom = matchState[player].gamJeom;
     if (amount < 0 && currentGamJeom === 0) return;
-
     setMatchState((prev) => ({
       ...prev,
       [player]: {
@@ -101,32 +120,51 @@ export const MatchProvider = ({ children }) => {
       },
     }));
   };
-
   const toggleTimer = () => {
     if (matchState.status === "FINISHED") return;
     setMatchState((prev) => ({
       ...prev,
       isTimerRunning: !prev.isTimerRunning,
-      status: "RUNNING",
     }));
   };
-
-  const setTimerManually = () => {
-    const newTime = prompt("Enter new time in seconds:", matchState.timer);
-    const newTimeInSeconds = parseInt(newTime, 10);
-    if (!isNaN(newTimeInSeconds) && newTimeInSeconds >= 0) {
-      setMatchState((prev) => ({ ...prev, timer: newTimeInSeconds }));
-      setNotification(`Timer set to ${newTimeInSeconds} seconds.`, "info");
-    } else {
-      setNotification("Invalid time. Please enter numbers only.", "error");
+  const setTimer = (seconds) => {
+    if (!isNaN(seconds) && seconds >= 0) {
+      setMatchState((prev) => ({ ...prev, timer: seconds }));
     }
   };
 
   const endRoundAndAwardWinner = () => {
     clearInterval(timerRef.current);
     let roundWinner = "";
-    if (matchState.blue.score > matchState.red.score) roundWinner = "blue";
-    else if (matchState.red.score > matchState.blue.score) roundWinner = "red";
+    const { blue, red } = matchState;
+
+    if (blue.score > red.score) {
+      roundWinner = "blue";
+    } else if (red.score > blue.score) {
+      roundWinner = "red";
+    } else {
+      // Tie-breaker logic
+      const pointValues = [5, 4, 3, 2, 1];
+      for (const value of pointValues) {
+        if (blue.pointsBreakdown[value] > red.pointsBreakdown[value]) {
+          roundWinner = "blue";
+          setNotification(
+            `BLUE wins by Superiority (${value}-point hits)!`,
+            "success"
+          );
+          break;
+        }
+        // ** THE BUG FIX IS HERE: Comparing red to blue, not red to red **
+        if (red.pointsBreakdown[value] > blue.pointsBreakdown[value]) {
+          roundWinner = "red";
+          setNotification(
+            `RED wins by Superiority (${value}-point hits)!`,
+            "success"
+          );
+          break;
+        }
+      }
+    }
 
     if (!roundWinner) {
       setNotification("Round is a Tie! No winner awarded.", "error");
@@ -134,10 +172,12 @@ export const MatchProvider = ({ children }) => {
       return;
     }
 
-    setNotification(
-      `${roundWinner.toUpperCase()} wins Round ${matchState.round}!`,
-      "success"
-    );
+    if (blue.score !== red.score) {
+      setNotification(
+        `${roundWinner.toUpperCase()} wins Round ${matchState.round}!`,
+        "success"
+      );
+    }
 
     setMatchState((prev) => {
       const newBlueWins =
@@ -146,10 +186,11 @@ export const MatchProvider = ({ children }) => {
       let newStatus = "PAUSED";
       let finalWinner = null;
 
-      if (newBlueWins === 2) {
+      if (newBlueWins >= 2) {
         newStatus = "FINISHED";
         finalWinner = "BLUE";
-      } else if (newRedWins === 2) {
+      }
+      if (newRedWins >= 2) {
         newStatus = "FINISHED";
         finalWinner = "RED";
       }
@@ -161,15 +202,26 @@ export const MatchProvider = ({ children }) => {
         isTimerRunning: false,
         status: newStatus,
         winner: finalWinner,
-        blue: { ...prev.blue, score: 0, gamJeom: 0, roundWins: newBlueWins },
-        red: { ...prev.red, score: 0, gamJeom: 0, roundWins: newRedWins },
+        blue: {
+          name: "BLUE",
+          roundWins: newBlueWins,
+          score: 0,
+          gamJeom: 0,
+          pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        },
+        red: {
+          name: "RED",
+          roundWins: newRedWins,
+          score: 0,
+          gamJeom: 0,
+          pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        },
       };
     });
   };
 
   const resetMatch = () => {
     setNotification("Match has been reset.", "info");
-    // قبل از ریست کردن، اطلاعات قدیمی localStorage را پاک می‌کنیم
     localStorage.removeItem("matchState");
     setMatchState(initialState);
   };
@@ -178,10 +230,10 @@ export const MatchProvider = ({ children }) => {
     matchState,
     changeScore,
     changeGamJeom,
+    setTimer,
     toggleTimer,
     endRoundAndAwardWinner,
     resetMatch,
-    setTimerManually,
   };
 
   return (
