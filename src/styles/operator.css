@@ -1,0 +1,169 @@
+body {
+  background-color: #e9ecef;
+}
+
+.operator-panel {
+  padding: 30px;
+  max-width: 80%; /* Applied user's change */
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.operator-panel h1 {
+  text-align: center;
+  color: #343a40;
+  margin-bottom: 10px;
+}
+
+.match-score-header {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+.main-controls {
+  text-align: center;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 25px;
+}
+
+.main-controls button {
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 12px 24px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.main-controls button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+.main-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* User's updated button colors */
+.btn-open {
+  background-color: #ff9500;
+  color: white;
+}
+.btn-timer.running {
+  background-color: #ffc107;
+  color: black;
+}
+.btn-timer.stopped {
+  background-color: #28a745;
+  color: white;
+}
+.btn-end-round {
+  background-color: #000000;
+  color: white;
+}
+.btn-reset-match {
+  background-color: #00c6c3;
+  color: white;
+}
+
+.control-section {
+  display: grid;
+  grid-template-columns: 1fr 0.5fr 1fr;
+  gap: 30px;
+  align-items: flex-start;
+  text-align: center;
+}
+
+.player-controls h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.status-display {
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 2px solid transparent; /* Make border transparent by default */
+  transition: all 0.3s ease;
+}
+
+/* ** NEW **: Color-coded containers */
+.status-display.blue-op {
+  background-color: #e7f5ff;
+  border-color: #90cfff;
+}
+.status-display.red-op {
+  background-color: #fff0f0;
+  border-color: #ffb3b3;
+}
+
+.status-display h3 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+}
+.status-display p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #6c757d;
+  font-weight: bold;
+}
+
+.score-buttons button {
+  width: 55px;
+  height: 55px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 5px;
+  border-radius: 50%;
+  border: 1px solid #ced4da;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.score-buttons button:hover {
+  background-color: #e9ecef;
+  transform: scale(1.05);
+}
+
+/* ** NEW **: Improved Gam-jeom button UX */
+.gamjeom-button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  background-color: #c82333;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.gamjeom-button:hover {
+  background-color: #a31a28;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
+
+.final-winner-text {
+  color: #28a745;
+  text-align: center;
+  font-size: 2.5rem;
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
