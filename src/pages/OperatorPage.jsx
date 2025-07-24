@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
-const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
+const TimerEditor = ({
+  currentSeconds,
+  onSave,
+  onCancel,
+  title = "Edit Time",
+}) => {
   const [minutes, setMinutes] = useState(
     Math.floor(currentSeconds / 60)
       .toString()
@@ -11,34 +16,41 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   const [seconds, setSeconds] = useState(
     (currentSeconds % 60).toString().padStart(2, "0")
   );
+
   const handleSave = () => {
     const totalSeconds =
       (parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0);
     onSave(totalSeconds);
   };
+
   return (
     <div className="timer-editor">
-      <input
-        type="number"
-        value={minutes}
-        onChange={(e) => setMinutes(e.target.value)}
-        min="0"
-        max="59"
-      />
-      <span>:</span>
-      <input
-        type="number"
-        value={seconds}
-        onChange={(e) => setSeconds(e.target.value)}
-        min="0"
-        max="59"
-      />
-      <button onClick={handleSave} className="btn-save-time">
-        Save
-      </button>
-      <button onClick={onCancel} className="btn-cancel-time">
-        Cancel
-      </button>
+      <h4>{title}</h4>
+      <div className="timer-inputs">
+        <input
+          type="number"
+          value={minutes}
+          onChange={(e) => setMinutes(e.target.value)}
+          min="0"
+          max="59"
+        />
+        <span>:</span>
+        <input
+          type="number"
+          value={seconds}
+          onChange={(e) => setSeconds(e.target.value)}
+          min="0"
+          max="59"
+        />
+      </div>
+      <div className="timer-editor-buttons">
+        <button onClick={handleSave} className="btn-save-time">
+          Save
+        </button>
+        <button onClick={onCancel} className="btn-cancel-time">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 };
@@ -54,9 +66,14 @@ const OperatorPage = () => {
     resetMatch,
     undoLastAction,
     changeRoundWins,
+    toggleRestTimer,
+    setRestTimer,
   } = useMatch();
+
   const [isEditingTime, setIsEditingTime] = useState(false);
+  const [isEditingRestTime, setIsEditingRestTime] = useState(false);
   const isFinished = matchState.status === "FINISHED";
+  const isResting = matchState.isRestPeriod;
 
   const FormattedTimer = ({ seconds }) => {
     const minutes = Math.floor(seconds / 60);
@@ -68,7 +85,6 @@ const OperatorPage = () => {
 
   const handleEditTimeClick = () => {
     if (isFinished) {
-      // We call the function directly to show notification, since it's guarded
       setTimer(0);
       return;
     }
@@ -125,7 +141,6 @@ const OperatorPage = () => {
             </button>
           </div>
         </div>
-
         <div className="main-controls">
           <button
             className="btn-open"
@@ -143,14 +158,14 @@ const OperatorPage = () => {
               matchState.isTimerRunning ? "running" : "stopped"
             }`}
             onClick={toggleTimer}
-            disabled={isFinished}
+            disabled={isFinished || isResting}
           >
             {matchState.isTimerRunning ? "Stop Timer" : "Start Timer"}
           </button>
           <button
             className="btn-end-round"
             onClick={endRoundAndAwardWinner}
-            disabled={isFinished}
+            disabled={isFinished || isResting}
           >
             End Round
           </button>
@@ -158,93 +173,137 @@ const OperatorPage = () => {
             Reset Match
           </button>
         </div>
-
         {matchState.winner && (
           <h1 className="final-winner-text">WINNER: {matchState.winner}</h1>
         )}
 
-        <div className="control-section">
-          <div className="player-controls">
-            <h2 style={{ color: "#007bff" }}>BLUE PLAYER</h2>
-            <div className="status-display blue-op">
-              <h3>Score: {matchState.blue.score}</h3>
-              <p>Gam-jeom: {matchState.blue.gamJeom}</p>
+        <div
+          className={`control-wrapper ${isResting ? "disabled-section" : ""}`}
+        >
+          <div className="control-section">
+            {/* Blue Player */}
+            <div className="player-controls">
+              <h2 style={{ color: "#007bff" }}>BLUE PLAYER</h2>
+              <div className="status-display blue-op">
+                <h3>Score: {matchState.blue.score}</h3>
+                <p>Gam-jeom: {matchState.blue.gamJeom}</p>
+              </div>
+              <div className="score-buttons">
+                {[1, 2, 3, 4, 5].map((p) => (
+                  <button
+                    key={`blue-${p}`}
+                    onClick={() => changeScore("blue", p)}
+                    disabled={isFinished}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="gamjeom-button"
+                onClick={() => addGamJeom("blue")}
+                disabled={isFinished}
+              >
+                ⚠️ Gam-jeom
+              </button>
             </div>
-            <div className="score-buttons">
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button
-                  key={`blue-${p}`}
-                  onClick={() => changeScore("blue", p)}
-                  disabled={isFinished}
-                >
-                  {p}
-                </button>
-              ))}
+            {/* Center Timer */}
+            <div className="player-controls">
+              <h2>TIMER & ROUND</h2>
+              {isEditingTime ? (
+                <TimerEditor
+                  currentSeconds={matchState.timer}
+                  onSave={(newTotalSeconds) => {
+                    setTimer(newTotalSeconds);
+                    setIsEditingTime(false);
+                  }}
+                  onCancel={() => setIsEditingTime(false)}
+                />
+              ) : (
+                <>
+                  <div className="timer-display-op">
+                    <FormattedTimer seconds={matchState.timer} />
+                  </div>
+                  <button
+                    className="btn-edit-time"
+                    onClick={handleEditTimeClick}
+                    disabled={isFinished}
+                  >
+                    Edit Time
+                  </button>
+                </>
+              )}
+              <div className="round-display">ROUND: {matchState.round}</div>
             </div>
-            <button
-              className="gamjeom-button"
-              onClick={() => addGamJeom("blue")}
-              disabled={isFinished}
-            >
-              ⚠️ Gam-jeom
-            </button>
+            {/* Red Player */}
+            <div className="player-controls">
+              <h2 style={{ color: "#dc3545" }}>RED PLAYER</h2>
+              <div className="status-display red-op">
+                <h3>Score: {matchState.red.score}</h3>
+                <p>Gam-jeom: {matchState.red.gamJeom}</p>
+              </div>
+              <div className="score-buttons">
+                {[1, 2, 3, 4, 5].map((p) => (
+                  <button
+                    key={`red-${p}`}
+                    onClick={() => changeScore("red", p)}
+                    disabled={isFinished}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="gamjeom-button"
+                onClick={() => addGamJeom("red")}
+                disabled={isFinished}
+              >
+                ⚠️ Gam-jeom
+              </button>
+            </div>
           </div>
+        </div>
 
-          <div className="player-controls">
-            <h2>TIMER & ROUND</h2>
-            {isEditingTime ? (
+        {isResting && (
+          <div className="rest-period-overlay">
+            <h2>REST PERIOD</h2>
+            {isEditingRestTime ? (
               <TimerEditor
-                currentSeconds={matchState.timer}
+                currentSeconds={matchState.restTimer}
                 onSave={(newTotalSeconds) => {
-                  setTimer(newTotalSeconds);
-                  setIsEditingTime(false);
+                  setRestTimer(newTotalSeconds);
+                  setIsEditingRestTime(false);
                 }}
-                onCancel={() => setIsEditingTime(false)}
+                onCancel={() => setIsEditingRestTime(false)}
+                title="Edit Rest Time"
               />
             ) : (
               <>
                 <div className="timer-display-op">
-                  <FormattedTimer seconds={matchState.timer} />
+                  <FormattedTimer seconds={matchState.restTimer} />
                 </div>
-                <button
-                  className="btn-edit-time"
-                  onClick={handleEditTimeClick}
-                  disabled={isFinished}
-                >
-                  Edit Time
-                </button>
+                <div className="rest-controls">
+                  <button
+                    className={`btn-timer ${
+                      matchState.isRestTimerRunning ? "running" : "stopped"
+                    }`}
+                    onClick={toggleRestTimer}
+                  >
+                    {matchState.isRestTimerRunning ? "Stop Rest" : "Start Rest"}
+                  </button>
+                  <button
+                    className="btn-edit-time"
+                    onClick={() => setIsEditingRestTime(true)}
+                  >
+                    Edit Rest Time
+                  </button>
+                </div>
               </>
             )}
-            <div className="round-display">ROUND: {matchState.round}</div>
           </div>
-
-          <div className="player-controls">
-            <h2 style={{ color: "#dc3545" }}>RED PLAYER</h2>
-            <div className="status-display red-op">
-              <h3>Score: {matchState.red.score}</h3>
-              <p>Gam-jeom: {matchState.red.gamJeom}</p>
-            </div>
-            <div className="score-buttons">
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button
-                  key={`red-${p}`}
-                  onClick={() => changeScore("red", p)}
-                  disabled={isFinished}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-            <button
-              className="gamjeom-button"
-              onClick={() => addGamJeom("red")}
-              disabled={isFinished}
-            >
-              ⚠️ Gam-jeom
-            </button>
-          </div>
-        </div>
+        )}
       </div>
+
       <div
         className={`notification ${matchState.notification.type} ${
           matchState.notification.visible ? "show" : ""
