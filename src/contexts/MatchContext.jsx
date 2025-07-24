@@ -7,10 +7,9 @@ import React, {
   useCallback,
 } from "react";
 
-// وارد کردن فایل‌های صوتی
 import startSoundSrc from "../assets/audio/B1.wav";
 import scoreSoundSrc from "../assets/audio/B2.wav";
-import tenSecondSoundSrc from "../assets/audio/B1.wav"; // This is the 10-second warning sound
+import tenSecondSoundSrc from "../assets/audio/B1.wav";
 import endSoundSrc from "../assets/audio/time.wav";
 import penaltySoundSrc from "../assets/audio/B1.wav";
 import restCountdownSoundSrc from "../assets/audio/B1.wav";
@@ -198,7 +197,6 @@ export const MatchProvider = ({ children }) => {
         _setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 }));
       }, 1000);
 
-      // Sound for last 5 seconds of REST time
       if (
         matchState.isRestPeriod &&
         matchState.timer <= 5 &&
@@ -207,7 +205,6 @@ export const MatchProvider = ({ children }) => {
         playSound(restCountdownSound);
       }
 
-      // ** THE FIX IS HERE: Sound for last 10 seconds of ROUND time **
       if (!matchState.isRestPeriod && matchState.timer === 10) {
         playSound(tenSecondSound);
       }

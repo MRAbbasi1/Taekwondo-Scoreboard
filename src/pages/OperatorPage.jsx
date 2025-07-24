@@ -99,7 +99,7 @@ const OperatorPage = () => {
   };
 
   const handleSkipRest = () => {
-    setIsEditingTime(false); // Close editor if it's open
+    setIsEditingTime(false);
     skipRest();
   };
 
