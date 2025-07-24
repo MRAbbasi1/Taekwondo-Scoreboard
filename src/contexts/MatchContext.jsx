@@ -143,12 +143,44 @@ export const MatchProvider = ({ children }) => {
     }
   };
 
+  const changeRoundWins = (player, amount) => {
+    setMatchStateWithHistory((prev) => {
+      const newRoundWins = Math.max(0, prev[player].roundWins + amount);
+      if (newRoundWins >= 2) {
+        setNotification(
+          `${player.toUpperCase()} set as winner. Reset match to continue.`,
+          "info"
+        );
+        return {
+          ...prev,
+          status: "FINISHED",
+          winner: player.toUpperCase(),
+          [player]: { ...prev[player], roundWins: newRoundWins },
+        };
+      }
+      return {
+        ...prev,
+        status: "PAUSED",
+        winner: null,
+        [player]: { ...prev[player], roundWins: newRoundWins },
+      };
+    });
+  };
+
+  // ** NEW FUNCTION TO EDIT ROUND NUMBER **
+  const changeRoundNumber = (amount) => {
+    setMatchStateWithHistory((prev) => {
+      const newRound = prev.round + amount;
+      if (newRound < 1 || newRound > 5) return prev; // Limit rounds between 1 and 5
+      return { ...prev, round: newRound };
+    });
+  };
+
   const endRoundAndAwardWinner = () => {
     clearInterval(timerRef.current);
     setMatchStateWithHistory((prev) => {
       let roundWinner = "";
       const { blue, red } = prev;
-
       if (blue.score > red.score) {
         roundWinner = "blue";
       } else if (red.score > blue.score) {
@@ -166,18 +198,15 @@ export const MatchProvider = ({ children }) => {
           }
         }
       }
-
       if (!roundWinner) {
         setNotification("Round is a Tie! No winner awarded.", "error");
         return { ...prev, isTimerRunning: false };
       }
-
       const newBlueWins =
         prev.blue.roundWins + (roundWinner === "blue" ? 1 : 0);
       const newRedWins = prev.red.roundWins + (roundWinner === "red" ? 1 : 0);
       let newStatus = "PAUSED";
       let finalWinner = null;
-
       if (newBlueWins >= 2) {
         newStatus = "FINISHED";
         finalWinner = "BLUE";
@@ -186,8 +215,6 @@ export const MatchProvider = ({ children }) => {
         newStatus = "FINISHED";
         finalWinner = "RED";
       }
-
-      // ** NEW LOGIC IS HERE **
       return {
         ...prev,
         round: newStatus === "FINISHED" ? prev.round : prev.round + 1,
@@ -198,7 +225,6 @@ export const MatchProvider = ({ children }) => {
         blue: {
           ...prev.blue,
           roundWins: newBlueWins,
-          // Only reset score/gam-jeom if the match is NOT finished
           score: newStatus !== "FINISHED" ? 0 : prev.blue.score,
           gamJeom: newStatus !== "FINISHED" ? 0 : prev.blue.gamJeom,
           pointsBreakdown:
@@ -236,6 +262,8 @@ export const MatchProvider = ({ children }) => {
     endRoundAndAwardWinner,
     resetMatch,
     undoLastAction,
+    changeRoundWins,
+    changeRoundNumber, // Export the new function
   };
 
   return (

@@ -17,12 +17,47 @@ body {
   color: #343a40;
   margin-bottom: 10px;
 }
+
+/* Styles for Round Win Editor */
 .match-score-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
   text-align: center;
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 25px;
 }
+.round-win-editor {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #f8f9fa;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+.round-win-editor span {
+  font-weight: bold;
+}
+.round-win-editor button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.round-win-editor button:hover {
+  background-color: #e9ecef;
+}
+
 .main-controls {
   text-align: center;
   padding-bottom: 25px;
@@ -47,7 +82,13 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Logical Button Colors */
 .btn-open {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-undo {
   background-color: #ff9500;
   color: white;
 }
@@ -64,9 +105,10 @@ body {
   color: white;
 }
 .btn-reset-match {
-  background-color: #00c6c3;
+  background-color: #dc3545;
   color: white;
 }
+
 .control-section {
   display: grid;
   grid-template-columns: 1fr 0.5fr 1fr;
@@ -119,6 +161,20 @@ body {
   background-color: #e9ecef;
   transform: scale(1.05);
 }
+.gamjeom-button {
+  width: auto;
+  padding: 12px 20px;
+  margin-top: 10px;
+  background-color: #c82333;
+  color: #fff;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.gamjeom-button:hover {
+  background-color: #a31a28;
+}
 .final-winner-text {
   color: #28a745;
   text-align: center;
@@ -136,6 +192,12 @@ body {
   }
 }
 
+/* Timer Editor Styles */
+.timer-display-op {
+  font-size: 5rem;
+  margin: 20px 0;
+  font-weight: bold;
+}
 .btn-edit-time {
   font-size: 0.9rem;
   padding: 8px 15px;
@@ -144,38 +206,6 @@ body {
   background-color: #f8f9fa;
   cursor: pointer;
 }
-.notification {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 16px;
-  text-align: center;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: bold;
-  transform: translateY(100%);
-  transition: transform 0.4s ease-in-out;
-}
-.notification.show {
-  transform: translateY(0);
-}
-.notification.info {
-  background-color: #17a2b8;
-}
-.notification.success {
-  background-color: #28a745;
-}
-.notification.error {
-  background-color: #dc3545;
-}
-
-.timer-display-op {
-  font-size: 5rem;
-  margin: 20px 0;
-  font-weight: bold;
-}
-
 .timer-editor {
   display: flex;
   flex-direction: column;
@@ -212,19 +242,57 @@ body {
   background-color: #6c757d;
 }
 
-.btn-undo {
-  background-color: #f700ff; /* Orange color for high visibility */
+/* Notification Bar Styles */
+.notification {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
   color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transform: translateY(100%);
+  transition: transform 0.4s ease-in-out;
 }
-
-.gamjeom-button {
-  width: auto; /* No longer full-width */
-  padding: 12px 20px;
-  margin-top: 10px;
-  background-color: #da0000;
-  color: #fff;
+.notification.show {
+  transform: translateY(0);
+}
+.notification.info {
+  background-color: #17a2b8;
+}
+.notification.success {
+  background-color: #28a745;
+}
+.notification.error {
+  background-color: #dc3545;
+}
+.round-editor {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  padding: 10px;
   border-radius: 10px;
-  border: none;
-  font-size: 1.4rem;
-  font-weight: 600;
+}
+.round-editor-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #343a40;
+}
+.round-editor button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.round-editor button:hover {
+  background-color: #e9ecef;
 }

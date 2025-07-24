@@ -2,9 +2,16 @@ import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
+// کامپوننت داخلی برای ویرایش تایمر
 const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
-  const [minutes, setMinutes] = useState(Math.floor(currentSeconds / 60));
-  const [seconds, setSeconds] = useState(currentSeconds % 60);
+  const [minutes, setMinutes] = useState(
+    Math.floor(currentSeconds / 60)
+      .toString()
+      .padStart(2, "0")
+  );
+  const [seconds, setSeconds] = useState(
+    (currentSeconds % 60).toString().padStart(2, "0")
+  );
 
   const handleSave = () => {
     const totalSeconds =
@@ -16,7 +23,7 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
     <div className="timer-editor">
       <input
         type="number"
-        value={minutes.toString().padStart(2, "0")}
+        value={minutes}
         onChange={(e) => setMinutes(e.target.value)}
         min="0"
         max="59"
@@ -24,7 +31,7 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
       <span>:</span>
       <input
         type="number"
-        value={seconds.toString().padStart(2, "0")}
+        value={seconds}
         onChange={(e) => setSeconds(e.target.value)}
         min="0"
         max="59"
@@ -39,6 +46,7 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   );
 };
 
+// کامپوننت اصلی صفحه اپراتور
 const OperatorPage = () => {
   const {
     matchState,
@@ -49,6 +57,8 @@ const OperatorPage = () => {
     endRoundAndAwardWinner,
     resetMatch,
     undoLastAction,
+    changeRoundWins,
+    changeRoundNumber,
   } = useMatch();
   const [isEditingTime, setIsEditingTime] = useState(false);
 
@@ -60,10 +70,9 @@ const OperatorPage = () => {
       .padStart(2, "0")}`;
   };
 
-  // ** NEW LOGIC IS HERE **
   const handleEditTimeClick = () => {
     if (matchState.isTimerRunning) {
-      toggleTimer(); // Stop the timer if it's running
+      toggleTimer();
     }
     setIsEditingTime(true);
   };
@@ -72,17 +81,58 @@ const OperatorPage = () => {
     <>
       <div className="operator-panel">
         <h1>Taekwondo Scoreboard Controls</h1>
-        <h2 className="match-score-header">
-          <span style={{ color: "#007bff" }}>BLUE</span>{" "}
-          <span style={{ color: "#007bff", fontSize: "2.5rem" }}>
-            {matchState.blue.roundWins}
-          </span>
-          {" - "}
-          <span style={{ color: "#dc3545", fontSize: "2.5rem" }}>
-            {matchState.red.roundWins}
-          </span>{" "}
-          <span style={{ color: "#dc3545" }}>RED</span>
-        </h2>
+
+        <div className="match-score-header">
+          <div className="round-win-editor">
+            <button
+              onClick={() => changeRoundWins("blue", -1)}
+              disabled={matchState.status === "FINISHED"}
+            >
+              -
+            </button>
+            <span style={{ color: "#007bff" }}>BLUE</span>
+            <span
+              style={{
+                color: "#007bff",
+                fontSize: "2.5rem",
+                width: "40px",
+              }}
+            >
+              {matchState.blue.roundWins}
+            </span>
+            <button
+              onClick={() => changeRoundWins("blue", 1)}
+              disabled={matchState.status === "FINISHED"}
+            >
+              +
+            </button>
+          </div>
+          <span style={{ fontSize: "2.5rem" }}>-</span>
+          <div className="round-win-editor">
+            <button
+              onClick={() => changeRoundWins("red", -1)}
+              disabled={matchState.status === "FINISHED"}
+            >
+              -
+            </button>
+            <span style={{ color: "#dc3545" }}>RED</span>
+            <span
+              style={{
+                color: "#dc3545",
+                fontSize: "2.5rem",
+                width: "40px",
+              }}
+            >
+              {matchState.red.roundWins}
+            </span>
+            <button
+              onClick={() => changeRoundWins("red", 1)}
+              disabled={matchState.status === "FINISHED"}
+            >
+              +
+            </button>
+          </div>
+        </div>
 
         <div className="main-controls">
           <button
@@ -149,7 +199,7 @@ const OperatorPage = () => {
             </button>
           </div>
 
-          {/* Center Timer */}
+          {/* Center Timer & Round Editor */}
           <div className="player-controls">
             <h2>TIMER</h2>
             {isEditingTime ? (
@@ -175,6 +225,23 @@ const OperatorPage = () => {
                 </button>
               </>
             )}
+            <div className="round-editor">
+              <button
+                onClick={() => changeRoundNumber(-1)}
+                disabled={matchState.status === "FINISHED"}
+              >
+                -
+              </button>
+              <span className="round-editor-text">
+                ROUND: {matchState.round}
+              </span>
+              <button
+                onClick={() => changeRoundNumber(1)}
+                disabled={matchState.status === "FINISHED"}
+              >
+                +
+              </button>
+            </div>
           </div>
 
           {/* Red Player */}
