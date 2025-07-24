@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MatchProvider } from "./contexts/MatchContext";
 import OperatorPage from "./pages/OperatorPage";
 import DisplayPage from "./pages/DisplayPage";
-import "./app.css";
+// import "./app.css";
 
 function App() {
   return (
