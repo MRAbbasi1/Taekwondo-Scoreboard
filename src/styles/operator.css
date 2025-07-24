@@ -17,8 +17,6 @@ body {
   color: #343a40;
   margin-bottom: 10px;
 }
-
-/* Styles for Round Win Editor */
 .match-score-header {
   display: flex;
   justify-content: center;
@@ -57,7 +55,6 @@ body {
 .round-win-editor button:hover {
   background-color: #e9ecef;
 }
-
 .main-controls {
   text-align: center;
   padding-bottom: 25px;
@@ -78,12 +75,16 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
-.main-controls button:disabled {
-  opacity: 0.5;
+
+/* ** UPDATED: More visible disabled style ** */
+.main-controls button:disabled,
+.player-controls button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+  background-image: none !important;
+  filter: grayscale(80%);
 }
 
-/* Logical Button Colors */
 .btn-open {
   background-color: #6c757d;
   color: white;
@@ -108,7 +109,6 @@ body {
   background-color: #dc3545;
   color: white;
 }
-
 .control-section {
   display: grid;
   grid-template-columns: 1fr 0.5fr 1fr;
@@ -157,7 +157,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.score-buttons button:hover {
+.score-buttons button:hover:not(:disabled) {
   background-color: #e9ecef;
   transform: scale(1.05);
 }
@@ -171,8 +171,9 @@ body {
   border: none;
   font-size: 1.4rem;
   font-weight: 600;
+  cursor: pointer;
 }
-.gamjeom-button:hover {
+.gamjeom-button:hover:not(:disabled) {
   background-color: #a31a28;
 }
 .final-winner-text {
@@ -191,8 +192,6 @@ body {
     transform: scale(1);
   }
 }
-
-/* Timer Editor Styles */
 .timer-display-op {
   font-size: 5rem;
   margin: 20px 0;
@@ -241,8 +240,16 @@ body {
 .timer-editor .btn-cancel-time {
   background-color: #6c757d;
 }
-
-/* Notification Bar Styles */
+.round-display {
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #343a40;
+  border: 1px solid #dee2e6;
+}
 .notification {
   position: absolute;
   bottom: 0;
@@ -267,10 +274,4 @@ body {
 }
 .notification.error {
   background-color: #dc3545;
-}
-.round-display {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #343a40;
-  margin-top: 50px;
 }

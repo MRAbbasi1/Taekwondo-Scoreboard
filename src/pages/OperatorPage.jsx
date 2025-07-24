@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
-// TimerEditor component remains the same
 const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   const [minutes, setMinutes] = useState(
     Math.floor(currentSeconds / 60)
@@ -12,13 +11,11 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   const [seconds, setSeconds] = useState(
     (currentSeconds % 60).toString().padStart(2, "0")
   );
-
   const handleSave = () => {
     const totalSeconds =
       (parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0);
     onSave(totalSeconds);
   };
-
   return (
     <div className="timer-editor">
       <input
@@ -59,6 +56,7 @@ const OperatorPage = () => {
     changeRoundWins,
   } = useMatch();
   const [isEditingTime, setIsEditingTime] = useState(false);
+  const isFinished = matchState.status === "FINISHED";
 
   const FormattedTimer = ({ seconds }) => {
     const minutes = Math.floor(seconds / 60);
@@ -69,6 +67,11 @@ const OperatorPage = () => {
   };
 
   const handleEditTimeClick = () => {
+    if (isFinished) {
+      // We call the function directly to show notification, since it's guarded
+      setTimer(0);
+      return;
+    }
     if (matchState.isTimerRunning) {
       toggleTimer();
     }
@@ -79,12 +82,11 @@ const OperatorPage = () => {
     <>
       <div className="operator-panel">
         <h1>Taekwondo Scoreboard Controls</h1>
-
         <div className="match-score-header">
           <div className="round-win-editor">
             <button
               onClick={() => changeRoundWins("blue", -1)}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               -
             </button>
@@ -96,7 +98,7 @@ const OperatorPage = () => {
             </span>
             <button
               onClick={() => changeRoundWins("blue", 1)}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               +
             </button>
@@ -105,7 +107,7 @@ const OperatorPage = () => {
           <div className="round-win-editor">
             <button
               onClick={() => changeRoundWins("red", -1)}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               -
             </button>
@@ -117,7 +119,7 @@ const OperatorPage = () => {
             </span>
             <button
               onClick={() => changeRoundWins("red", 1)}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               +
             </button>
@@ -141,14 +143,14 @@ const OperatorPage = () => {
               matchState.isTimerRunning ? "running" : "stopped"
             }`}
             onClick={toggleTimer}
-            disabled={matchState.status === "FINISHED"}
+            disabled={isFinished}
           >
             {matchState.isTimerRunning ? "Stop Timer" : "Start Timer"}
           </button>
           <button
             className="btn-end-round"
             onClick={endRoundAndAwardWinner}
-            disabled={matchState.status === "FINISHED"}
+            disabled={isFinished}
           >
             End Round
           </button>
@@ -173,7 +175,7 @@ const OperatorPage = () => {
                 <button
                   key={`blue-${p}`}
                   onClick={() => changeScore("blue", p)}
-                  disabled={matchState.status === "FINISHED"}
+                  disabled={isFinished}
                 >
                   {p}
                 </button>
@@ -182,14 +184,14 @@ const OperatorPage = () => {
             <button
               className="gamjeom-button"
               onClick={() => addGamJeom("blue")}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               ⚠️ Gam-jeom
             </button>
           </div>
 
           <div className="player-controls">
-            <h2>TIMER</h2>
+            <h2>TIMER & ROUND</h2>
             {isEditingTime ? (
               <TimerEditor
                 currentSeconds={matchState.timer}
@@ -207,14 +209,12 @@ const OperatorPage = () => {
                 <button
                   className="btn-edit-time"
                   onClick={handleEditTimeClick}
-                  disabled={matchState.status === "FINISHED"}
+                  disabled={isFinished}
                 >
                   Edit Time
                 </button>
               </>
             )}
-
-            {/* ** ROUND DISPLAY IS NOW A SIMPLE TEXT ** */}
             <div className="round-display">ROUND: {matchState.round}</div>
           </div>
 
@@ -229,7 +229,7 @@ const OperatorPage = () => {
                 <button
                   key={`red-${p}`}
                   onClick={() => changeScore("red", p)}
-                  disabled={matchState.status === "FINISHED"}
+                  disabled={isFinished}
                 >
                   {p}
                 </button>
@@ -238,14 +238,13 @@ const OperatorPage = () => {
             <button
               className="gamjeom-button"
               onClick={() => addGamJeom("red")}
-              disabled={matchState.status === "FINISHED"}
+              disabled={isFinished}
             >
               ⚠️ Gam-jeom
             </button>
           </div>
         </div>
       </div>
-
       <div
         className={`notification ${matchState.notification.type} ${
           matchState.notification.visible ? "show" : ""

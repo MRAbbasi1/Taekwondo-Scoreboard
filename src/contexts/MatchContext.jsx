@@ -153,7 +153,7 @@ export const MatchProvider = ({ children }) => {
       } else {
         const pointValues = [5, 4, 3, 2, 1];
         for (const value of pointValues) {
-          if (blue.pointsBreakdown[value] > red.pointsBreakdown[value]) {
+          if (blue.pointsBreakdown[value] > blue.pointsBreakdown[value]) {
             roundWinner = "blue";
             winType = `Superiority (SUP)`;
             break;
@@ -167,7 +167,6 @@ export const MatchProvider = ({ children }) => {
       }
       if (!roundWinner) {
         setNotification("Round is a Tie! No winner awarded.", "error");
-        // ** BUG FIX IS HERE: We now correctly set the timer to not running, but allow it to be started again **
         return { ...prev, isTimerRunning: false, status: "PAUSED" };
       }
       setNotification(
@@ -209,121 +208,151 @@ export const MatchProvider = ({ children }) => {
     }
   }, [setNotification]);
 
+  const guardedAction = (action) => {
+    if (matchState.status === "FINISHED") {
+      setNotification(
+        "Match is over. Please reset to start a new match.",
+        "error"
+      );
+      return;
+    }
+    action();
+  };
+
   const changeScore = useCallback(
     (player, points) => {
-      if (matchState.status === "FINISHED") return;
-      if (points > 0) {
-        playSound(scoreSound);
-      }
-      setMatchStateWithHistory((prev) => {
-        const newScore = Math.max(0, prev[player].score + points);
-        const newBreakdown = { ...prev[player].pointsBreakdown };
-        if (points > 0 && newBreakdown[points] !== undefined) {
-          newBreakdown[points]++;
-        }
-        const opponent = player === "blue" ? "red" : "blue";
-        if (Math.abs(newScore - prev[opponent].score) >= 12) {
-          const roundWinner =
-            newScore > prev[opponent].score ? player : opponent;
-          setNotification(
-            `${roundWinner.toUpperCase()} wins Round ${
-              prev.round
-            } by Point Gap (PTG)!`,
-            "success"
-          );
-          return _handleRoundEnd(
-            {
-              ...prev,
-              [player]: {
-                ...prev[player],
-                score: newScore,
-                pointsBreakdown: newBreakdown,
+      guardedAction(() => {
+        if (points > 0) playSound(scoreSound);
+        setMatchStateWithHistory((prev) => {
+          const newScore = Math.max(0, prev[player].score + points);
+          const newBreakdown = { ...prev[player].pointsBreakdown };
+          if (points > 0 && newBreakdown[points] !== undefined)
+            newBreakdown[points]++;
+          const opponent = player === "blue" ? "red" : "blue";
+          if (Math.abs(newScore - prev[opponent].score) >= 12) {
+            const roundWinner =
+              newScore > prev[opponent].score ? player : opponent;
+            setNotification(
+              `${roundWinner.toUpperCase()} wins Round ${
+                prev.round
+              } by Point Gap (PTG)!`,
+              "success"
+            );
+            return _handleRoundEnd(
+              {
+                ...prev,
+                [player]: {
+                  ...prev[player],
+                  score: newScore,
+                  pointsBreakdown: newBreakdown,
+                },
               },
+              roundWinner
+            );
+          }
+          return {
+            ...prev,
+            [player]: {
+              ...prev[player],
+              score: newScore,
+              pointsBreakdown: newBreakdown,
             },
-            roundWinner
-          );
-        }
-        return {
-          ...prev,
-          [player]: {
-            ...prev[player],
-            score: newScore,
-            pointsBreakdown: newBreakdown,
-          },
-        };
+          };
+        });
       });
     },
-    [setMatchStateWithHistory, _handleRoundEnd, setNotification]
+    [
+      matchState.status,
+      setMatchStateWithHistory,
+      _handleRoundEnd,
+      setNotification,
+    ]
   );
 
   const addGamJeom = useCallback(
     (player) => {
-      if (matchState.status === "FINISHED") return;
-      playSound(scoreSound);
-      setMatchStateWithHistory((prev) => {
-        const opponent = player === "blue" ? "red" : "blue";
-        return {
-          ...prev,
-          [player]: { ...prev[player], gamJeom: prev[player].gamJeom + 1 },
-          [opponent]: { ...prev[opponent], score: prev[opponent].score + 1 },
-        };
+      guardedAction(() => {
+        playSound(scoreSound);
+        setMatchStateWithHistory((prev) => {
+          const opponent = player === "blue" ? "red" : "blue";
+          return {
+            ...prev,
+            [player]: { ...prev[player], gamJeom: prev[player].gamJeom + 1 },
+            [opponent]: { ...prev[opponent], score: prev[opponent].score + 1 },
+          };
+        });
       });
     },
-    [setMatchStateWithHistory]
+    [matchState.status, setMatchStateWithHistory]
   );
 
   const toggleTimer = useCallback(() => {
-    if (matchState.status === "FINISHED") return;
-    if (!matchState.isTimerRunning) {
-      playSound(startSound);
-    }
-    setMatchStateWithHistory((prev) => ({
-      ...prev,
-      isTimerRunning: !prev.isTimerRunning,
-    }));
-  }, [setMatchStateWithHistory, matchState.isTimerRunning]);
+    guardedAction(() => {
+      if (!matchState.isTimerRunning && matchState.timer <= 0) {
+        setNotification(
+          "Timer is at 00:00. Please edit time or reset the match.",
+          "error"
+        );
+        return;
+      }
+      if (!matchState.isTimerRunning) playSound(startSound);
+      setMatchStateWithHistory((prev) => ({
+        ...prev,
+        isTimerRunning: !prev.isTimerRunning,
+      }));
+    });
+  }, [
+    matchState.status,
+    matchState.isTimerRunning,
+    matchState.timer,
+    setMatchStateWithHistory,
+    setNotification,
+  ]);
 
   const setTimer = useCallback(
     (seconds) => {
-      if (!isNaN(seconds) && seconds >= 0) {
-        setMatchStateWithHistory((prev) => ({ ...prev, timer: seconds }));
-      }
+      guardedAction(() => {
+        if (!isNaN(seconds) && seconds >= 0)
+          setMatchStateWithHistory((prev) => ({ ...prev, timer: seconds }));
+      });
     },
-    [setMatchStateWithHistory]
+    [matchState.status, setMatchStateWithHistory]
   );
 
   const changeRoundWins = useCallback(
     (player, amount) => {
-      setMatchStateWithHistory((prev) => {
-        const newRoundWins = Math.max(0, prev[player].roundWins + amount);
-        const opponent = player === "blue" ? "red" : "blue";
-        const blueWins =
-          player === "blue" ? newRoundWins : prev[opponent].roundWins;
-        const redWins =
-          player === "red" ? newRoundWins : prev[opponent].roundWins;
-        let newCurrentRound = blueWins + redWins + 1;
-        let newStatus = "PAUSED";
-        let finalWinner = null;
-        if (blueWins >= 2) {
-          newStatus = "FINISHED";
-          finalWinner = "BLUE";
-          newCurrentRound = blueWins + redWins;
-        } else if (redWins >= 2) {
-          newStatus = "FINISHED";
-          finalWinner = "RED";
-          newCurrentRound = blueWins + redWins;
-        }
-        newCurrentRound = Math.min(3, newCurrentRound);
-        return {
-          ...prev,
-          round: newCurrentRound,
-          status: newStatus,
-          winner: finalWinner,
-          [player]: { ...prev[player], roundWins: newRoundWins },
-        };
+      guardedAction(() => {
+        setMatchStateWithHistory((prev) => {
+          const newRoundWins = Math.max(0, prev[player].roundWins + amount);
+          const opponent = player === "blue" ? "red" : "blue";
+          const blueWins =
+            player === "blue" ? newRoundWins : prev[opponent].roundWins;
+          const redWins =
+            player === "red" ? newRoundWins : prev[opponent].roundWins;
+          let newCurrentRound = blueWins + redWins + 1;
+          let newStatus = "PAUSED";
+          let finalWinner = null;
+          if (blueWins >= 2) {
+            newStatus = "FINISHED";
+            finalWinner = "BLUE";
+            newCurrentRound = blueWins + redWins;
+          } else if (redWins >= 2) {
+            newStatus = "FINISHED";
+            finalWinner = "RED";
+            newCurrentRound = blueWins + redWins;
+          }
+          newCurrentRound = Math.min(3, newCurrentRound);
+          return {
+            ...prev,
+            round: newCurrentRound,
+            status: newStatus,
+            winner: finalWinner,
+            [player]: { ...prev[player], roundWins: newRoundWins },
+          };
+        });
       });
     },
-    [setMatchStateWithHistory, setNotification]
+    [matchState.status, setMatchStateWithHistory, setNotification]
   );
 
   const resetMatch = useCallback(() => {
