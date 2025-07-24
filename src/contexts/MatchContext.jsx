@@ -7,22 +7,23 @@ import React, {
   useCallback,
 } from "react";
 
-// وارد کردن فایل‌های صوتی جدید
+// وارد کردن فایل‌های صوتی
 import startSoundSrc from "../assets/audio/B1.wav";
 import scoreSoundSrc from "../assets/audio/B2.wav";
-import penaltySoundSrc from "../assets/audio/B2.wav";
+import tenSecondSoundSrc from "../assets/audio/B1.wav"; // This is the 10-second warning sound
 import endSoundSrc from "../assets/audio/time.wav";
-import restCountdownSoundSrc from "../assets/audio/B2.wav";
+import penaltySoundSrc from "../assets/audio/B1.wav";
+import restCountdownSoundSrc from "../assets/audio/B1.wav";
 
 const channel = new BroadcastChannel("taekwondo_scoreboard");
 const MatchContext = createContext();
 
 export const MatchProvider = ({ children }) => {
-  // ساختن آبجکت‌های Audio
   const startSound = useRef(new Audio(startSoundSrc));
   const scoreSound = useRef(new Audio(scoreSoundSrc));
-  const penaltySound = useRef(new Audio(penaltySoundSrc));
+  const tenSecondSound = useRef(new Audio(tenSecondSoundSrc));
   const endSound = useRef(new Audio(endSoundSrc));
+  const penaltySound = useRef(new Audio(penaltySoundSrc));
   const restCountdownSound = useRef(new Audio(restCountdownSoundSrc));
 
   const playSound = (audioRef) => {
@@ -36,8 +37,6 @@ export const MatchProvider = ({ children }) => {
     round: 1,
     timer: 120,
     isTimerRunning: false,
-    restTimer: 60,
-    isRestTimerRunning: false,
     isRestPeriod: false,
     blue: {
       name: "BLUE",
@@ -63,12 +62,7 @@ export const MatchProvider = ({ children }) => {
     if (savedState) {
       const parsed = JSON.parse(savedState);
       if (parsed.blue && parsed.blue.pointsBreakdown)
-        return {
-          ...initialState,
-          ...parsed,
-          isTimerRunning: false,
-          isRestTimerRunning: false,
-        };
+        return { ...initialState, ...parsed, isTimerRunning: false };
     }
     return initialState;
   });
@@ -76,7 +70,6 @@ export const MatchProvider = ({ children }) => {
   const history = useRef([matchState]);
   const notificationTimerRef = useRef(null);
   const timerRef = useRef(null);
-  const restTimerRef = useRef(null);
 
   const setNotification = useCallback(
     (message, type = "info", duration = 4000) => {
@@ -103,7 +96,6 @@ export const MatchProvider = ({ children }) => {
     let newStatus = "PAUSED";
     let finalWinner = null;
     let isNowResting = false;
-
     if (newBlueWins >= 2) {
       newStatus = "FINISHED";
       finalWinner = "BLUE";
@@ -112,15 +104,13 @@ export const MatchProvider = ({ children }) => {
       newStatus = "FINISHED";
       finalWinner = "RED";
     }
-
     if (newStatus !== "FINISHED") {
       isNowResting = true;
     }
-
     return {
       ...prevState,
       round: newStatus === "FINISHED" ? prevState.round : prevState.round + 1,
-      timer: 120,
+      timer: isNowResting ? 60 : 120,
       isTimerRunning: false,
       status: newStatus,
       winner: finalWinner,
@@ -207,38 +197,43 @@ export const MatchProvider = ({ children }) => {
       timerRef.current = setInterval(() => {
         _setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 }));
       }, 1000);
-    } else if (matchState.timer <= 0 && matchState.isTimerRunning) {
-      playSound(endSound);
-      endRoundAndAwardWinner();
-    }
-  }, [matchState.isTimerRunning, matchState.timer, endRoundAndAwardWinner]);
 
-  useEffect(() => {
-    clearInterval(restTimerRef.current);
-    if (matchState.isRestTimerRunning && matchState.restTimer > 0) {
-      restTimerRef.current = setInterval(() => {
-        _setMatchState((prev) => ({ ...prev, restTimer: prev.restTimer - 1 }));
-      }, 1000);
-      if (matchState.restTimer <= 5 && matchState.restTimer > 0) {
+      // Sound for last 5 seconds of REST time
+      if (
+        matchState.isRestPeriod &&
+        matchState.timer <= 5 &&
+        matchState.timer > 0
+      ) {
         playSound(restCountdownSound);
       }
-    } else if (matchState.restTimer <= 0 && matchState.isRestTimerRunning) {
+
+      // ** THE FIX IS HERE: Sound for last 10 seconds of ROUND time **
+      if (!matchState.isRestPeriod && matchState.timer === 10) {
+        playSound(tenSecondSound);
+      }
+    } else if (matchState.timer <= 0 && matchState.isTimerRunning) {
       playSound(endSound);
-      _setMatchState((prev) => ({
-        ...prev,
-        isRestTimerRunning: false,
-        isRestPeriod: false,
-      }));
-      setNotification(
-        `Rest period over. Round ${matchState.round} is ready.`,
-        "info"
-      );
+      if (matchState.isRestPeriod) {
+        _setMatchState((prev) => ({
+          ...prev,
+          isTimerRunning: false,
+          isRestPeriod: false,
+          timer: 120,
+        }));
+        setNotification(
+          `Rest period over. Round ${matchState.round} is ready.`,
+          "info"
+        );
+      } else {
+        endRoundAndAwardWinner();
+      }
     }
   }, [
-    matchState.isRestTimerRunning,
-    matchState.restTimer,
+    matchState.isTimerRunning,
+    matchState.timer,
+    matchState.isRestPeriod,
+    endRoundAndAwardWinner,
     setNotification,
-    endSound,
   ]);
 
   const undoLastAction = useCallback(() => {
@@ -265,6 +260,10 @@ export const MatchProvider = ({ children }) => {
   const changeScore = useCallback(
     (player, points) => {
       guardedAction(() => {
+        if (matchState.isRestPeriod) {
+          setNotification("Cannot score during rest period.", "error");
+          return;
+        }
         playSound(scoreSound);
         setMatchStateWithHistory((prev) => {
           const newScore = Math.max(0, prev[player].score + points);
@@ -306,6 +305,7 @@ export const MatchProvider = ({ children }) => {
     },
     [
       matchState.status,
+      matchState.isRestPeriod,
       setMatchStateWithHistory,
       _handleRoundEnd,
       setNotification,
@@ -315,6 +315,10 @@ export const MatchProvider = ({ children }) => {
   const addGamJeom = useCallback(
     (player) => {
       guardedAction(() => {
+        if (matchState.isRestPeriod) {
+          setNotification("Cannot give penalty during rest period.", "error");
+          return;
+        }
         playSound(penaltySound);
         setMatchStateWithHistory((prev) => {
           const opponent = player === "blue" ? "red" : "blue";
@@ -326,18 +330,25 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, setMatchStateWithHistory]
+    [matchState.status, matchState.isRestPeriod, setMatchStateWithHistory]
   );
 
   const toggleTimer = useCallback(() => {
     guardedAction(() => {
       if (matchState.isRestPeriod) {
-        setNotification("Cannot start match during rest period.", "error");
+        if (!matchState.isTimerRunning && matchState.timer <= 0) {
+          setNotification("Rest time is over. Please edit time.", "error");
+          return;
+        }
+        _setMatchState((prev) => ({
+          ...prev,
+          isTimerRunning: !prev.isTimerRunning,
+        }));
         return;
       }
       if (!matchState.isTimerRunning && matchState.timer <= 0) {
         setNotification(
-          "Timer is at 00:00. Please edit time or reset the match.",
+          "Timer is at 00:00. Please edit time or start rest.",
           "error"
         );
         return;
@@ -367,31 +378,61 @@ export const MatchProvider = ({ children }) => {
     [matchState.status, setMatchStateWithHistory]
   );
 
-  const toggleRestTimer = useCallback(() => {
-    if (!matchState.isRestTimerRunning && matchState.restTimer <= 0) {
-      setNotification(
-        "Rest time is over. Please edit time to restart.",
-        "error"
-      );
-      return;
-    }
+  const startRest = useCallback(() => {
+    guardedAction(() => {
+      setMatchStateWithHistory((prev) => ({
+        ...prev,
+        isRestPeriod: true,
+        timer: 60,
+        isTimerRunning: false,
+      }));
+    });
+  }, [matchState.status, setMatchStateWithHistory]);
+
+  const skipRest = useCallback(() => {
+    clearInterval(timerRef.current);
     _setMatchState((prev) => ({
       ...prev,
-      isRestTimerRunning: !prev.isRestTimerRunning,
+      isRestPeriod: false,
+      timer: 120,
+      isTimerRunning: false,
     }));
-  }, [matchState.isRestTimerRunning, matchState.restTimer, setNotification]);
-
-  const setRestTimer = useCallback((seconds) => {
-    if (!isNaN(seconds) && seconds >= 0) {
-      _setMatchState((prev) => ({ ...prev, restTimer: seconds }));
-    }
-  }, []);
+    setNotification(
+      `Rest skipped. Round ${matchState.round} is ready.`,
+      "info"
+    );
+  }, [matchState.round, setNotification]);
 
   const changeRoundWins = useCallback(
     (player, amount) => {
       guardedAction(() => {
         setMatchStateWithHistory((prev) => {
-          /* ... */
+          const newRoundWins = Math.max(0, prev[player].roundWins + amount);
+          const opponent = player === "blue" ? "red" : "blue";
+          const blueWins =
+            player === "blue" ? newRoundWins : prev[opponent].roundWins;
+          const redWins =
+            player === "red" ? newRoundWins : prev[opponent].roundWins;
+          let newCurrentRound = blueWins + redWins + 1;
+          let newStatus = "PAUSED";
+          let finalWinner = null;
+          if (blueWins >= 2) {
+            newStatus = "FINISHED";
+            finalWinner = "BLUE";
+            newCurrentRound = blueWins + redWins;
+          } else if (redWins >= 2) {
+            newStatus = "FINISHED";
+            finalWinner = "RED";
+            newCurrentRound = blueWins + redWins;
+          }
+          newCurrentRound = Math.min(3, newCurrentRound);
+          return {
+            ...prev,
+            round: newCurrentRound,
+            status: newStatus,
+            winner: finalWinner,
+            [player]: { ...prev[player], roundWins: newRoundWins },
+          };
         });
       });
     },
@@ -415,8 +456,8 @@ export const MatchProvider = ({ children }) => {
     resetMatch,
     undoLastAction,
     changeRoundWins,
-    toggleRestTimer,
-    setRestTimer,
+    startRest,
+    skipRest,
   };
 
   return (

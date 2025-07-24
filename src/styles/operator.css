@@ -60,8 +60,6 @@ body {
   padding-bottom: 25px;
   border-bottom: 1px solid #dee2e6;
   margin-bottom: 25px;
-  position: relative;
-  z-index: 1;
 }
 .main-controls button {
   font-size: 1rem;
@@ -106,8 +104,13 @@ body {
   background-color: #dc3545;
   color: white;
 }
-.control-wrapper {
-  transition: all 0.3s ease-in-out;
+.btn-rest {
+  background-color: #17a2b8;
+  color: white;
+}
+.btn-skip-rest {
+  background-color: #6c757d;
+  color: white;
 }
 .control-section {
   display: grid;
@@ -115,6 +118,11 @@ body {
   gap: 30px;
   align-items: flex-start;
   text-align: center;
+  transition: all 0.3s ease-in-out;
+}
+.player-controls.disabled-section {
+  opacity: 0.4;
+  pointer-events: none;
 }
 .player-controls h2 {
   font-size: 1.8rem;
@@ -196,6 +204,10 @@ body {
   font-size: 5rem;
   margin: 20px 0;
   font-weight: bold;
+  transition: color 0.3s ease;
+}
+.timer-display-op.rest-timer-display {
+  color: #17a2b8;
 }
 .btn-edit-time {
   font-size: 0.9rem;
@@ -287,46 +299,4 @@ body {
 }
 .notification.error {
   background-color: #dc3545;
-}
-.disabled-section {
-  opacity: 0.3;
-  pointer-events: none;
-  filter: blur(1px);
-}
-.rest-period-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 95%;
-  height: 95%;
-  background: rgba(255, 255, 255, 0.98);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  backdrop-filter: blur(4px);
-  border-radius: 12px;
-  border: 1px solid #dee2e6;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-}
-.rest-period-overlay h2 {
-  font-size: 3rem;
-  color: #343a40;
-  margin-top: 0;
-}
-.rest-period-overlay .timer-display-op {
-  font-size: 8rem;
-  color: #007bff;
-  margin: 0;
-}
-.rest-period-overlay .rest-controls {
-  margin-top: 20px;
-}
-.rest-period-overlay .btn-timer,
-.rest-period-overlay .btn-edit-time {
-  font-size: 1.2rem;
-  padding: 15px 30px;
-  margin: 10px;
 }
