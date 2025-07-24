@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
-// Timer Edit Component
 const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   const [minutes, setMinutes] = useState(Math.floor(currentSeconds / 60));
   const [seconds, setSeconds] = useState(currentSeconds % 60);
 
   const handleSave = () => {
-    const totalSeconds = parseInt(minutes, 10) * 60 + parseInt(seconds, 10);
+    const totalSeconds =
+      (parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0);
     onSave(totalSeconds);
   };
 
@@ -16,7 +16,7 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
     <div className="timer-editor">
       <input
         type="number"
-        value={minutes}
+        value={minutes.toString().padStart(2, "0")}
         onChange={(e) => setMinutes(e.target.value)}
         min="0"
         max="59"
@@ -24,7 +24,7 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
       <span>:</span>
       <input
         type="number"
-        value={seconds}
+        value={seconds.toString().padStart(2, "0")}
         onChange={(e) => setSeconds(e.target.value)}
         min="0"
         max="59"
@@ -43,25 +43,27 @@ const OperatorPage = () => {
   const {
     matchState,
     changeScore,
-    changeGamJeom,
+    addGamJeom,
     setTimer,
     toggleTimer,
     endRoundAndAwardWinner,
     resetMatch,
+    undoLastAction,
   } = useMatch();
   const [isEditingTime, setIsEditingTime] = useState(false);
 
   const FormattedTimer = ({ seconds }) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (
     <>
       <div className="operator-panel">
         <h1>Taekwondo Scoreboard Controls</h1>
-        {/* ... (Header and Main Controls remain the same) ... */}
         <h2 className="match-score-header">
           <span style={{ color: "#007bff" }}>BLUE</span>{" "}
           <span style={{ color: "#007bff", fontSize: "2.5rem" }}>
@@ -73,6 +75,7 @@ const OperatorPage = () => {
           </span>{" "}
           <span style={{ color: "#dc3545" }}>RED</span>
         </h2>
+
         <div className="main-controls">
           <button
             className="btn-open"
@@ -81,6 +84,9 @@ const OperatorPage = () => {
             }
           >
             Open Display
+          </button>
+          <button className="btn-undo" onClick={undoLastAction}>
+            Undo Last Action
           </button>
           <button
             className={`btn-timer ${
@@ -96,53 +102,24 @@ const OperatorPage = () => {
             onClick={endRoundAndAwardWinner}
             disabled={matchState.status === "FINISHED"}
           >
-            End Round & Award Winner
+            End Round
           </button>
           <button className="btn-reset-match" onClick={resetMatch}>
-            Reset Full Match
+            Reset Match
           </button>
         </div>
 
         {matchState.winner && (
           <h1 className="final-winner-text">WINNER: {matchState.winner}</h1>
         )}
+
         <div className="control-section">
-          {/* ... (Blue Player Controls remain the same, but use 'changeScore' and 'changeGamJeom') ... */}
+          {/* Blue Player */}
           <div className="player-controls">
             <h2 style={{ color: "#007bff" }}>BLUE PLAYER</h2>
             <div className="status-display blue-op">
               <h3>Score: {matchState.blue.score}</h3>
-              <div className="manual-edit">
-                <button
-                  onClick={() => changeScore("blue", -1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  -
-                </button>
-                <span>Score</span>
-                <button
-                  onClick={() => changeScore("blue", 1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  +
-                </button>
-              </div>
               <p>Gam-jeom: {matchState.blue.gamJeom}</p>
-              <div className="manual-edit">
-                <button
-                  onClick={() => changeGamJeom("blue", -1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  -
-                </button>
-                <span>Gam-jeom</span>
-                <button
-                  onClick={() => changeGamJeom("blue", 1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  +
-                </button>
-              </div>
             </div>
             <div className="score-buttons">
               {[1, 2, 3, 4, 5].map((p) => (
@@ -155,9 +132,16 @@ const OperatorPage = () => {
                 </button>
               ))}
             </div>
+            <button
+              className="gamjeom-button"
+              onClick={() => addGamJeom("blue")}
+              disabled={matchState.status === "FINISHED"}
+            >
+              ⚠️ Gam-jeom
+            </button>
           </div>
 
-          {/* Center Timer Display with Edit functionality */}
+          {/* Center Timer */}
           <div className="player-controls">
             <h2>TIMER</h2>
             {isEditingTime ? (
@@ -185,42 +169,12 @@ const OperatorPage = () => {
             )}
           </div>
 
-          {/* ... (Red Player Controls remain the same, but use 'changeScore' and 'changeGamJeom') ... */}
+          {/* Red Player */}
           <div className="player-controls">
             <h2 style={{ color: "#dc3545" }}>RED PLAYER</h2>
             <div className="status-display red-op">
               <h3>Score: {matchState.red.score}</h3>
-              <div className="manual-edit">
-                <button
-                  onClick={() => changeScore("red", -1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  -
-                </button>
-                <span>Score</span>
-                <button
-                  onClick={() => changeScore("red", 1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  +
-                </button>
-              </div>
               <p>Gam-jeom: {matchState.red.gamJeom}</p>
-              <div className="manual-edit">
-                <button
-                  onClick={() => changeGamJeom("red", -1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  -
-                </button>
-                <span>Gam-jeom</span>
-                <button
-                  onClick={() => changeGamJeom("red", 1)}
-                  disabled={matchState.status === "FINISHED"}
-                >
-                  +
-                </button>
-              </div>
             </div>
             <div className="score-buttons">
               {[1, 2, 3, 4, 5].map((p) => (
@@ -233,9 +187,17 @@ const OperatorPage = () => {
                 </button>
               ))}
             </div>
+            <button
+              className="gamjeom-button"
+              onClick={() => addGamJeom("red")}
+              disabled={matchState.status === "FINISHED"}
+            >
+              ⚠️ Gam-jeom
+            </button>
           </div>
         </div>
       </div>
+
       <div
         className={`notification ${matchState.notification.type} ${
           matchState.notification.visible ? "show" : ""
