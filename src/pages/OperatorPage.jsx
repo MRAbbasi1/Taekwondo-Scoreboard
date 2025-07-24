@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
-// کامپوننت داخلی برای ویرایش تایمر
+// TimerEditor component remains the same
 const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   const [minutes, setMinutes] = useState(
     Math.floor(currentSeconds / 60)
@@ -46,7 +46,6 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel }) => {
   );
 };
 
-// کامپوننت اصلی صفحه اپراتور
 const OperatorPage = () => {
   const {
     matchState,
@@ -58,7 +57,6 @@ const OperatorPage = () => {
     resetMatch,
     undoLastAction,
     changeRoundWins,
-    changeRoundNumber,
   } = useMatch();
   const [isEditingTime, setIsEditingTime] = useState(false);
 
@@ -92,11 +90,7 @@ const OperatorPage = () => {
             </button>
             <span style={{ color: "#007bff" }}>BLUE</span>
             <span
-              style={{
-                color: "#007bff",
-                fontSize: "2.5rem",
-                width: "40px",
-              }}
+              style={{ color: "#007bff", fontSize: "2.5rem", width: "40px" }}
             >
               {matchState.blue.roundWins}
             </span>
@@ -117,11 +111,7 @@ const OperatorPage = () => {
             </button>
             <span style={{ color: "#dc3545" }}>RED</span>
             <span
-              style={{
-                color: "#dc3545",
-                fontSize: "2.5rem",
-                width: "40px",
-              }}
+              style={{ color: "#dc3545", fontSize: "2.5rem", width: "40px" }}
             >
               {matchState.red.roundWins}
             </span>
@@ -172,7 +162,6 @@ const OperatorPage = () => {
         )}
 
         <div className="control-section">
-          {/* Blue Player */}
           <div className="player-controls">
             <h2 style={{ color: "#007bff" }}>BLUE PLAYER</h2>
             <div className="status-display blue-op">
@@ -199,7 +188,6 @@ const OperatorPage = () => {
             </button>
           </div>
 
-          {/* Center Timer & Round Editor */}
           <div className="player-controls">
             <h2>TIMER</h2>
             {isEditingTime ? (
@@ -225,26 +213,11 @@ const OperatorPage = () => {
                 </button>
               </>
             )}
-            <div className="round-editor">
-              <button
-                onClick={() => changeRoundNumber(-1)}
-                disabled={matchState.status === "FINISHED"}
-              >
-                -
-              </button>
-              <span className="round-editor-text">
-                ROUND: {matchState.round}
-              </span>
-              <button
-                onClick={() => changeRoundNumber(1)}
-                disabled={matchState.status === "FINISHED"}
-              >
-                +
-              </button>
-            </div>
+
+            {/* ** ROUND DISPLAY IS NOW A SIMPLE TEXT ** */}
+            <div className="round-display">ROUND: {matchState.round}</div>
           </div>
 
-          {/* Red Player */}
           <div className="player-controls">
             <h2 style={{ color: "#dc3545" }}>RED PLAYER</h2>
             <div className="status-display red-op">

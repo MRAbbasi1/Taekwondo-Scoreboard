@@ -143,36 +143,41 @@ export const MatchProvider = ({ children }) => {
     }
   };
 
+  // ** NEW SMART LOGIC **
   const changeRoundWins = (player, amount) => {
     setMatchStateWithHistory((prev) => {
       const newRoundWins = Math.max(0, prev[player].roundWins + amount);
-      if (newRoundWins >= 2) {
-        setNotification(
-          `${player.toUpperCase()} set as winner. Reset match to continue.`,
-          "info"
-        );
-        return {
-          ...prev,
-          status: "FINISHED",
-          winner: player.toUpperCase(),
-          [player]: { ...prev[player], roundWins: newRoundWins },
-        };
+      const updatedPlayerState = { ...prev[player], roundWins: newRoundWins };
+
+      const opponent = player === "blue" ? "red" : "blue";
+      const blueWins =
+        player === "blue" ? newRoundWins : prev[opponent].roundWins;
+      const redWins =
+        player === "red" ? newRoundWins : prev[opponent].roundWins;
+
+      let newCurrentRound = blueWins + redWins + 1;
+      let newStatus = "PAUSED";
+      let finalWinner = null;
+
+      if (blueWins >= 2) {
+        newStatus = "FINISHED";
+        finalWinner = "BLUE";
+        newCurrentRound = blueWins + redWins;
+      } else if (redWins >= 2) {
+        newStatus = "FINISHED";
+        finalWinner = "RED";
+        newCurrentRound = blueWins + redWins;
       }
+
+      newCurrentRound = Math.min(3, newCurrentRound);
+
       return {
         ...prev,
-        status: "PAUSED",
-        winner: null,
-        [player]: { ...prev[player], roundWins: newRoundWins },
+        round: newCurrentRound,
+        status: newStatus,
+        winner: finalWinner,
+        [player]: updatedPlayerState,
       };
-    });
-  };
-
-  // ** NEW FUNCTION TO EDIT ROUND NUMBER **
-  const changeRoundNumber = (amount) => {
-    setMatchStateWithHistory((prev) => {
-      const newRound = prev.round + amount;
-      if (newRound < 1 || newRound > 5) return prev; // Limit rounds between 1 and 5
-      return { ...prev, round: newRound };
     });
   };
 
@@ -263,7 +268,7 @@ export const MatchProvider = ({ children }) => {
     resetMatch,
     undoLastAction,
     changeRoundWins,
-    changeRoundNumber, // Export the new function
+    // changeRoundNumber is removed
   };
 
   return (

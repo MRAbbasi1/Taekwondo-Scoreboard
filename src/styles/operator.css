@@ -268,31 +268,9 @@ body {
 .notification.error {
   background-color: #dc3545;
 }
-.round-editor {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-  background-color: #f8f9fa;
-  padding: 10px;
-  border-radius: 10px;
-}
-.round-editor-text {
-  font-size: 1.2rem;
+.round-display {
+  font-size: 1.5rem;
   font-weight: bold;
   color: #343a40;
-}
-.round-editor button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  background: #fff;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.round-editor button:hover {
-  background-color: #e9ecef;
+  margin-top: 50px;
 }
