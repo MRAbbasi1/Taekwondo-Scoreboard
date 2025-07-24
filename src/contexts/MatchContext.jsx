@@ -44,9 +44,9 @@ export const MatchProvider = ({ children }) => {
 
   const history = useRef([matchState]);
   const notificationTimerRef = useRef(null);
-  const timerRef = useRef(null); // timerRef needs to be accessible here
+  const timerRef = useRef(null);
 
-  const setMatchState = (updater) => {
+  const setMatchStateWithHistory = (updater) => {
     _setMatchState((currentState) => {
       history.current.push(currentState);
       if (history.current.length > 30) history.current.shift();
@@ -70,7 +70,7 @@ export const MatchProvider = ({ children }) => {
   }, [matchState]);
 
   useEffect(() => {
-    clearInterval(timerRef.current); // Clear previous interval
+    clearInterval(timerRef.current);
     if (matchState.isTimerRunning && matchState.timer > 0) {
       timerRef.current = setInterval(() => {
         _setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 }));
@@ -100,19 +100,11 @@ export const MatchProvider = ({ children }) => {
 
   const changeScore = (player, points) => {
     if (matchState.status === "FINISHED") return;
-    setMatchState((prev) => {
+    setMatchStateWithHistory((prev) => {
       const newScore = Math.max(0, prev[player].score + points);
       const newBreakdown = { ...prev[player].pointsBreakdown };
       if (points > 0 && newBreakdown[points] !== undefined) {
         newBreakdown[points]++;
-      } else if (points < 0) {
-        // Simple logic to remove a point from breakdown
-        for (let i = 5; i >= 1; i--) {
-          if (newBreakdown[i] > 0) {
-            newBreakdown[i]--;
-            break;
-          }
-        }
       }
       return {
         ...prev,
@@ -127,7 +119,7 @@ export const MatchProvider = ({ children }) => {
 
   const addGamJeom = (player) => {
     if (matchState.status === "FINISHED") return;
-    setMatchState((prev) => {
+    setMatchStateWithHistory((prev) => {
       const opponent = player === "blue" ? "red" : "blue";
       return {
         ...prev,
@@ -139,7 +131,7 @@ export const MatchProvider = ({ children }) => {
 
   const toggleTimer = () => {
     if (matchState.status === "FINISHED") return;
-    setMatchState((prev) => ({
+    setMatchStateWithHistory((prev) => ({
       ...prev,
       isTimerRunning: !prev.isTimerRunning,
     }));
@@ -147,16 +139,13 @@ export const MatchProvider = ({ children }) => {
 
   const setTimer = (seconds) => {
     if (!isNaN(seconds) && seconds >= 0) {
-      setMatchState((prev) => ({ ...prev, timer: seconds }));
+      setMatchStateWithHistory((prev) => ({ ...prev, timer: seconds }));
     }
   };
 
   const endRoundAndAwardWinner = () => {
-    // ** THE BUG FIX IS HERE **
-    // We stop the timer *before* updating the state.
     clearInterval(timerRef.current);
-
-    setMatchState((prev) => {
+    setMatchStateWithHistory((prev) => {
       let roundWinner = "";
       const { blue, red } = prev;
 
@@ -169,18 +158,10 @@ export const MatchProvider = ({ children }) => {
         for (const value of pointValues) {
           if (blue.pointsBreakdown[value] > red.pointsBreakdown[value]) {
             roundWinner = "blue";
-            setNotification(
-              `BLUE wins by Superiority (${value}-point hits)!`,
-              "success"
-            );
             break;
           }
           if (red.pointsBreakdown[value] > blue.pointsBreakdown[value]) {
             roundWinner = "red";
-            setNotification(
-              `RED wins by Superiority (${value}-point hits)!`,
-              "success"
-            );
             break;
           }
         }
@@ -189,13 +170,6 @@ export const MatchProvider = ({ children }) => {
       if (!roundWinner) {
         setNotification("Round is a Tie! No winner awarded.", "error");
         return { ...prev, isTimerRunning: false };
-      }
-
-      if (blue.score !== red.score) {
-        setNotification(
-          `${roundWinner.toUpperCase()} wins Round ${prev.round}!`,
-          "success"
-        );
       }
 
       const newBlueWins =
@@ -213,6 +187,7 @@ export const MatchProvider = ({ children }) => {
         finalWinner = "RED";
       }
 
+      // ** NEW LOGIC IS HERE **
       return {
         ...prev,
         round: newStatus === "FINISHED" ? prev.round : prev.round + 1,
@@ -221,18 +196,25 @@ export const MatchProvider = ({ children }) => {
         status: newStatus,
         winner: finalWinner,
         blue: {
-          name: "BLUE",
+          ...prev.blue,
           roundWins: newBlueWins,
-          score: 0,
-          gamJeom: 0,
-          pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          // Only reset score/gam-jeom if the match is NOT finished
+          score: newStatus !== "FINISHED" ? 0 : prev.blue.score,
+          gamJeom: newStatus !== "FINISHED" ? 0 : prev.blue.gamJeom,
+          pointsBreakdown:
+            newStatus !== "FINISHED"
+              ? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+              : prev.blue.pointsBreakdown,
         },
         red: {
-          name: "RED",
+          ...prev.red,
           roundWins: newRedWins,
-          score: 0,
-          gamJeom: 0,
-          pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          score: newStatus !== "FINISHED" ? 0 : prev.red.score,
+          gamJeom: newStatus !== "FINISHED" ? 0 : prev.red.gamJeom,
+          pointsBreakdown:
+            newStatus !== "FINISHED"
+              ? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+              : prev.red.pointsBreakdown,
         },
       };
     });

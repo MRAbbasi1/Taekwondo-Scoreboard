@@ -60,6 +60,14 @@ const OperatorPage = () => {
       .padStart(2, "0")}`;
   };
 
+  // ** NEW LOGIC IS HERE **
+  const handleEditTimeClick = () => {
+    if (matchState.isTimerRunning) {
+      toggleTimer(); // Stop the timer if it's running
+    }
+    setIsEditingTime(true);
+  };
+
   return (
     <>
       <div className="operator-panel">
@@ -160,7 +168,7 @@ const OperatorPage = () => {
                 </div>
                 <button
                   className="btn-edit-time"
-                  onClick={() => setIsEditingTime(true)}
+                  onClick={handleEditTimeClick}
                   disabled={matchState.status === "FINISHED"}
                 >
                   Edit Time
