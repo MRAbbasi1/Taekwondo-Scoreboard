@@ -59,9 +59,15 @@ export const MatchProvider = ({ children }) => {
   const [matchState, _setMatchState] = useState(() => {
     const savedState = localStorage.getItem("matchState");
     if (savedState) {
-      const parsed = JSON.parse(savedState);
-      if (parsed.blue && parsed.blue.pointsBreakdown)
-        return { ...initialState, ...parsed, isTimerRunning: false };
+      try {
+        const parsed = JSON.parse(savedState);
+
+        if (parsed.status && parsed.status !== "FINISHED") {
+          return { ...initialState, ...parsed, isTimerRunning: false };
+        }
+      } catch (error) {
+        console.error("Failed to parse state from localStorage", error);
+      }
     }
     return initialState;
   });
@@ -222,7 +228,7 @@ export const MatchProvider = ({ children }) => {
       _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
 
       if (matchState.isRestPeriod) {
-        playSound(restCountdownSound); // Play sound on rest end
+        playSound(restCountdownSound);
         setNotification(
           `Rest period over. Round ${matchState.round} is ready.`,
           "info"
@@ -367,7 +373,7 @@ export const MatchProvider = ({ children }) => {
 
   const startRest = useCallback(() => {
     guardedAction(() => {
-      playSound(restCountdownSound); // Play sound on rest start
+      // playSound(restCountdownSound);
       setMatchState((prev) => ({
         ...prev,
         isRestPeriod: true,
