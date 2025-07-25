@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from "react";
 import "../styles/display.css";
 
-const FormattedTimer = ({ seconds }) => {
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
+const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+
+  if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
+    const ms = Math.floor((milliseconds % 1000) / 10)
+      .toString()
+      .padStart(2, "0");
+    return `${minutes}:${secs.toString().padStart(2, "0")}:${ms}`;
+  }
+
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
@@ -57,7 +66,10 @@ const DisplayPage = () => {
             </span>
           </div>
           <div className="timer">
-            <FormattedTimer seconds={matchState.timer} />
+            <FormattedTimer
+              milliseconds={matchState.timer}
+              isRestPeriod={matchState.isRestPeriod}
+            />
           </div>
           <div className="round-info">
             <span className="label">ROUND</span>

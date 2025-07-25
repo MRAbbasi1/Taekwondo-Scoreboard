@@ -71,9 +71,20 @@ const OperatorPage = () => {
   const isFinished = matchState.status === "FINISHED";
   const isResting = matchState.isRestPeriod;
 
-  const FormattedTimer = ({ seconds }) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+  const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+
+    if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
+      const ms = Math.floor((milliseconds % 1000) / 10)
+        .toString()
+        .padStart(2, "0");
+      return `${minutes.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}:${ms}`;
+    }
+
     return `${minutes.toString().padStart(2, "0")}:${secs
       .toString()
       .padStart(2, "0")}`;
@@ -165,7 +176,10 @@ const OperatorPage = () => {
         <div className={`panel center-console ${isResting ? "resting" : ""}`}>
           <div className="round-display">ROUND: {matchState.round}</div>
           <div className="timer-display">
-            <FormattedTimer seconds={matchState.timer} />
+            <FormattedTimer
+              milliseconds={matchState.timer}
+              isRestPeriod={isResting}
+            />
           </div>
           <button
             className="btn-edit-time"
@@ -269,7 +283,7 @@ const OperatorPage = () => {
       {/* Overlays */}
       {isEditingTime && (
         <TimerEditor
-          currentSeconds={matchState.timer}
+          currentSeconds={Math.round(matchState.timer / 1000)}
           onSave={(newTime) => {
             setTimer(newTime);
             setIsEditingTime(false);

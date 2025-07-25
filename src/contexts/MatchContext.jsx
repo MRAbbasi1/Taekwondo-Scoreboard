@@ -34,7 +34,7 @@ export const MatchProvider = ({ children }) => {
 
   const initialState = {
     round: 1,
-    timer: 120,
+    timer: 120000,
     isTimerRunning: false,
     isRestPeriod: false,
     blue: {
@@ -69,6 +69,12 @@ export const MatchProvider = ({ children }) => {
   const history = useRef([matchState]);
   const notificationTimerRef = useRef(null);
   const timerRef = useRef(null);
+
+  const setMatchState = (updater) => {
+    history.current.push(matchState);
+    if (history.current.length > 30) history.current.shift();
+    _setMatchState(updater);
+  };
 
   const setNotification = useCallback(
     (message, type = "info", duration = 4000) => {
@@ -109,7 +115,7 @@ export const MatchProvider = ({ children }) => {
     return {
       ...prevState,
       round: newStatus === "FINISHED" ? prevState.round : prevState.round + 1,
-      timer: isNowResting ? 60 : 120,
+      timer: isNowResting ? 60000 : 120000,
       isTimerRunning: false,
       status: newStatus,
       winner: finalWinner,
@@ -137,18 +143,9 @@ export const MatchProvider = ({ children }) => {
     };
   }, []);
 
-  const setMatchStateWithHistory = useCallback((updater) => {
-    _setMatchState((currentState) => {
-      history.current.push(currentState);
-      if (history.current.length > 30) history.current.shift();
-      return typeof updater === "function" ? updater(currentState) : updater;
-    });
-  }, []);
-
   const endRoundAndAwardWinner = useCallback(() => {
     playSound(endSound);
-    clearInterval(timerRef.current);
-    setMatchStateWithHistory((prev) => {
+    setMatchState((prev) => {
       let roundWinner = "",
         winType = "";
       const { blue, red } = prev;
@@ -183,7 +180,7 @@ export const MatchProvider = ({ children }) => {
       );
       return _handleRoundEnd(prev, roundWinner);
     });
-  }, [setNotification, setMatchStateWithHistory, _handleRoundEnd]);
+  }, [setNotification, _handleRoundEnd]);
 
   useEffect(() => {
     localStorage.setItem("matchState", JSON.stringify(matchState));
@@ -191,44 +188,59 @@ export const MatchProvider = ({ children }) => {
   }, [matchState]);
 
   useEffect(() => {
-    clearInterval(timerRef.current);
-    if (matchState.isTimerRunning && matchState.timer > 0) {
+    if (matchState.isTimerRunning) {
+      const isFastMode = matchState.timer <= 10000 && !matchState.isRestPeriod;
+      const intervalRate = isFastMode ? 47 : 250;
+
       timerRef.current = setInterval(() => {
-        _setMatchState((prev) => ({ ...prev, timer: prev.timer - 1 }));
-      }, 1000);
+        _setMatchState((prev) => {
+          if (!prev.isTimerRunning || prev.timer <= 0) return prev;
 
-      if (
-        matchState.isRestPeriod &&
-        matchState.timer <= 5 &&
-        matchState.timer > 0
-      ) {
-        playSound(restCountdownSound);
-      }
+          const newTimer = Math.max(0, prev.timer - intervalRate);
 
-      if (!matchState.isRestPeriod && matchState.timer === 10) {
-        playSound(tenSecondSound);
-      }
-    } else if (matchState.timer <= 0 && matchState.isTimerRunning) {
-      playSound(endSound);
+          if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
+            playSound(tenSecondSound);
+          }
+
+          if (prev.isRestPeriod && prev.timer > 0) {
+            const previousSecond = Math.ceil(prev.timer / 1000);
+            const currentSecond = Math.ceil(newTimer / 1000);
+            if (currentSecond < previousSecond && currentSecond <= 5) {
+              playSound(restCountdownSound);
+            }
+          }
+
+          return { ...prev, timer: newTimer };
+        });
+      }, intervalRate);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [matchState.isTimerRunning, matchState.timer <= 10000]);
+
+  useEffect(() => {
+    if (matchState.timer <= 0 && matchState.isTimerRunning) {
+      _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
+
       if (matchState.isRestPeriod) {
-        _setMatchState((prev) => ({
-          ...prev,
-          isTimerRunning: false,
-          isRestPeriod: false,
-          timer: 120,
-        }));
+        playSound(restCountdownSound); // Play sound on rest end
         setNotification(
           `Rest period over. Round ${matchState.round} is ready.`,
           "info"
         );
+        _setMatchState((prev) => ({
+          ...prev,
+          isRestPeriod: false,
+          timer: 120000,
+        }));
       } else {
         endRoundAndAwardWinner();
       }
     }
   }, [
-    matchState.isTimerRunning,
     matchState.timer,
+    matchState.isTimerRunning,
     matchState.isRestPeriod,
+    matchState.round,
     endRoundAndAwardWinner,
     setNotification,
   ]);
@@ -262,7 +274,7 @@ export const MatchProvider = ({ children }) => {
           return;
         }
         playSound(scoreSound);
-        setMatchStateWithHistory((prev) => {
+        setMatchState((prev) => {
           const newScore = Math.max(0, prev[player].score + points);
           const newBreakdown = { ...prev[player].pointsBreakdown };
           if (points > 0 && newBreakdown[points] !== undefined)
@@ -303,9 +315,8 @@ export const MatchProvider = ({ children }) => {
     [
       matchState.status,
       matchState.isRestPeriod,
-      setMatchStateWithHistory,
-      _handleRoundEnd,
       setNotification,
+      _handleRoundEnd,
     ]
   );
 
@@ -317,7 +328,7 @@ export const MatchProvider = ({ children }) => {
           return;
         }
         playSound(penaltySound);
-        setMatchStateWithHistory((prev) => {
+        setMatchState((prev) => {
           const opponent = player === "blue" ? "red" : "blue";
           return {
             ...prev,
@@ -327,71 +338,50 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, matchState.isRestPeriod, setMatchStateWithHistory]
+    [matchState.status, matchState.isRestPeriod, setNotification]
   );
 
   const toggleTimer = useCallback(() => {
     guardedAction(() => {
-      if (matchState.isRestPeriod) {
-        if (!matchState.isTimerRunning && matchState.timer <= 0) {
-          setNotification("Rest time is over. Please edit time.", "error");
-          return;
-        }
-        _setMatchState((prev) => ({
-          ...prev,
-          isTimerRunning: !prev.isTimerRunning,
-        }));
-        return;
-      }
       if (!matchState.isTimerRunning && matchState.timer <= 0) {
-        setNotification(
-          "Timer is at 00:00. Please edit time or start rest.",
-          "error"
-        );
+        setNotification("Timer is at 00:00. Please edit time.", "error");
         return;
       }
       if (!matchState.isTimerRunning) playSound(startSound);
-      setMatchStateWithHistory((prev) => ({
+      _setMatchState((prev) => ({
         ...prev,
         isTimerRunning: !prev.isTimerRunning,
       }));
     });
-  }, [
-    matchState.status,
-    matchState.isTimerRunning,
-    matchState.timer,
-    matchState.isRestPeriod,
-    setMatchStateWithHistory,
-    setNotification,
-  ]);
+  }, [matchState.status, matchState.timer, setNotification]);
 
   const setTimer = useCallback(
     (seconds) => {
       guardedAction(() => {
         if (!isNaN(seconds) && seconds >= 0)
-          setMatchStateWithHistory((prev) => ({ ...prev, timer: seconds }));
+          setMatchState((prev) => ({ ...prev, timer: seconds * 1000 }));
       });
     },
-    [matchState.status, setMatchStateWithHistory]
+    [matchState.status]
   );
 
   const startRest = useCallback(() => {
     guardedAction(() => {
-      setMatchStateWithHistory((prev) => ({
+      playSound(restCountdownSound); // Play sound on rest start
+      setMatchState((prev) => ({
         ...prev,
         isRestPeriod: true,
-        timer: 60,
+        timer: 60000,
         isTimerRunning: false,
       }));
     });
-  }, [matchState.status, setMatchStateWithHistory]);
+  }, [matchState.status]);
 
   const skipRest = useCallback(() => {
-    clearInterval(timerRef.current);
     _setMatchState((prev) => ({
       ...prev,
       isRestPeriod: false,
-      timer: 120,
+      timer: 120000,
       isTimerRunning: false,
     }));
     setNotification(
@@ -403,16 +393,17 @@ export const MatchProvider = ({ children }) => {
   const changeRoundWins = useCallback(
     (player, amount) => {
       guardedAction(() => {
-        setMatchStateWithHistory((prev) => {
+        setMatchState((prev) => {
           const newRoundWins = Math.max(0, prev[player].roundWins + amount);
           const opponent = player === "blue" ? "red" : "blue";
           const blueWins =
-            player === "blue" ? newRoundWins : prev[opponent].roundWins;
-          const redWins =
-            player === "red" ? newRoundWins : prev[opponent].roundWins;
+            player === "blue" ? newRoundWins : prev.blue.roundWins;
+          const redWins = player === "red" ? newRoundWins : prev.red.roundWins;
+
           let newCurrentRound = blueWins + redWins + 1;
           let newStatus = "PAUSED";
           let finalWinner = null;
+
           if (blueWins >= 2) {
             newStatus = "FINISHED";
             finalWinner = "BLUE";
@@ -422,7 +413,9 @@ export const MatchProvider = ({ children }) => {
             finalWinner = "RED";
             newCurrentRound = blueWins + redWins;
           }
+
           newCurrentRound = Math.min(3, newCurrentRound);
+
           return {
             ...prev,
             round: newCurrentRound,
@@ -433,7 +426,7 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, setMatchStateWithHistory, setNotification]
+    [matchState.status, setNotification]
   );
 
   const resetMatch = useCallback(() => {

@@ -242,7 +242,7 @@ button:hover:not(:disabled) {
   margin-bottom: 50px;
 }
 .timer-display {
-  font-size: 9rem;
+  font-size: 7rem;
   font-weight: 700;
   font-family: "Roboto Mono", monospace;
   line-height: 1;
