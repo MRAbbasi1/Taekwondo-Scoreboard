@@ -61,7 +61,6 @@ export const MatchProvider = ({ children }) => {
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
-
         if (parsed.status && parsed.status !== "FINISHED") {
           return { ...initialState, ...parsed, isTimerRunning: false };
         }
@@ -228,7 +227,6 @@ export const MatchProvider = ({ children }) => {
       _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
 
       if (matchState.isRestPeriod) {
-        playSound(restCountdownSound);
         setNotification(
           `Rest period over. Round ${matchState.round} is ready.`,
           "info"
@@ -285,8 +283,13 @@ export const MatchProvider = ({ children }) => {
           const newBreakdown = { ...prev[player].pointsBreakdown };
           if (points > 0 && newBreakdown[points] !== undefined)
             newBreakdown[points]++;
+
           const opponent = player === "blue" ? "red" : "blue";
-          if (Math.abs(newScore - prev[opponent].score) >= 12) {
+
+          if (
+            prev.isTimerRunning &&
+            Math.abs(newScore - prev[opponent].score) >= 12
+          ) {
             const roundWinner =
               newScore > prev[opponent].score ? player : opponent;
             setNotification(
@@ -321,6 +324,7 @@ export const MatchProvider = ({ children }) => {
     [
       matchState.status,
       matchState.isRestPeriod,
+      matchState.isTimerRunning,
       setNotification,
       _handleRoundEnd,
     ]
@@ -353,7 +357,6 @@ export const MatchProvider = ({ children }) => {
         setNotification("Timer is at 00:00. Please edit time.", "error");
         return;
       }
-      if (!matchState.isTimerRunning) playSound(startSound);
       _setMatchState((prev) => ({
         ...prev,
         isTimerRunning: !prev.isTimerRunning,
@@ -373,7 +376,6 @@ export const MatchProvider = ({ children }) => {
 
   const startRest = useCallback(() => {
     guardedAction(() => {
-      // playSound(restCountdownSound);
       setMatchState((prev) => ({
         ...prev,
         isRestPeriod: true,
