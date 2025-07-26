@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 
+// کامپوننت ویرایشگر زمان (بدون تغییر)
 const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
   const [minutes, setMinutes] = useState(
     Math.floor(currentSeconds / 60)
@@ -52,6 +53,67 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
   );
 };
 
+// کامپوننت پیش‌نمایش صفحه دیسپلی
+const DisplayPreview = ({ matchState }) => {
+  const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+
+    if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
+      const ms = Math.floor((milliseconds % 1000) / 10)
+        .toString()
+        .padStart(2, "0");
+      return `${minutes}:${secs.toString().padStart(2, "0")}:${ms}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  if (!matchState) {
+    return (
+      <div className="display-container">Waiting for operator signal...</div>
+    );
+  }
+
+  return (
+    <div className="display-container">
+      <div className="score-board">
+        {/* Blue Player */}
+        <div className="player-section blue">
+          <p className="score">{matchState.blue.score}</p>
+          <p className="gam-jeom">GAM-JEOM: {matchState.blue.gamJeom}</p>
+        </div>
+
+        {/* Center Info */}
+        <div className="center-section">
+          <div className="match-score">
+            <span className="label">MATCH</span>
+            <span className="score-text">
+              {matchState.blue.roundWins} - {matchState.red.roundWins}
+            </span>
+          </div>
+          <div className="timer">
+            <FormattedTimer
+              milliseconds={matchState.timer}
+              isRestPeriod={matchState.isRestPeriod}
+            />
+          </div>
+          <div className="round-info">
+            <span className="label">ROUND</span>
+            <span className="round-number">{matchState.round}</span>
+          </div>
+        </div>
+
+        {/* Red Player */}
+        <div className="player-section red">
+          <p className="score">{matchState.red.score}</p>
+          <p className="gam-jeom">GAM-JEOM: {matchState.red.gamJeom}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const OperatorPage = () => {
   const {
     matchState,
@@ -71,115 +133,31 @@ const OperatorPage = () => {
   const isFinished = matchState.status === "FINISHED";
   const isResting = matchState.isRestPeriod;
 
-  const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-
-    if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
-      const ms = Math.floor((milliseconds % 1000) / 10)
-        .toString()
-        .padStart(2, "0");
-      return `${minutes.toString().padStart(2, "0")}:${secs
-        .toString()
-        .padStart(2, "0")}:${ms}`;
-    }
-
-    return `${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
   const handleEditTimeClick = () => {
     if (matchState.isTimerRunning) toggleTimer();
     setIsEditingTime(true);
   };
 
+  const OperatorFormattedTimer = ({ milliseconds }) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   return (
     <>
-      <div className="operator-grid-container">
-        {/* Header Panel */}
-        <header className="panel header-panel">
-          <div className="round-win-editor">
-            <button
-              onClick={() => changeRoundWins("blue", -1)}
-              disabled={isFinished}
-            >
-              -
-            </button>
-            <div className="round-wins blue">
-              <span>BLUE</span>
-              <span>{matchState.blue.roundWins}</span>
-            </div>
-            <button
-              onClick={() => changeRoundWins("blue", 1)}
-              disabled={isFinished}
-            >
-              +
-            </button>
-          </div>
+      <div className="operator-layout-container">
+        <main className="preview-panel">
+          <DisplayPreview matchState={matchState} />
+        </main>
 
-          <h1>MATCH CONTROL</h1>
-
-          <div className="round-win-editor">
-            <button
-              onClick={() => changeRoundWins("red", -1)}
-              disabled={isFinished}
-            >
-              -
-            </button>
-            <div className="round-wins red">
-              <span>RED</span>
-              <span>{matchState.red.roundWins}</span>
-            </div>
-            <button
-              onClick={() => changeRoundWins("red", 1)}
-              disabled={isFinished}
-            >
-              +
-            </button>
-          </div>
-        </header>
-
-        {/* Blue Player Panel */}
-        <div
-          className={`panel player-panel blue ${
-            isResting || isFinished ? "disabled-section" : ""
-          }`}
-        >
-          <h2 style={{ color: "var(--primary-blue)" }}>BLUE</h2>
-          <div className="score-display">{matchState.blue.score}</div>
-          <div className="gamjeom-display">
-            Gam-jeom: {matchState.blue.gamJeom}
-          </div>
-          <div className="score-buttons">
-            {[1, 2, 3, 4, 5].map((p) => (
-              <button
-                key={`blue-p-${p}`}
-                onClick={() => changeScore("blue", p)}
-                disabled={isFinished || isResting}
-              >
-                +{p}
-              </button>
-            ))}
-          </div>
-          <button
-            className="gamjeom-button"
-            onClick={() => addGamJeom("blue")}
-            disabled={isFinished || isResting}
-          >
-            Gam-jeom
-          </button>
-        </div>
-
-        {/* Center Console */}
-        <div className={`panel center-console ${isResting ? "resting" : ""}`}>
+        <aside className={`sidebar-panel ${isResting ? "resting" : ""}`}>
           <div className="round-display">ROUND: {matchState.round}</div>
           <div className="timer-display">
-            <FormattedTimer
-              milliseconds={matchState.timer}
-              isRestPeriod={isResting}
-            />
+            <OperatorFormattedTimer milliseconds={matchState.timer} />
           </div>
           <button
             className="btn-edit-time"
@@ -207,7 +185,7 @@ const OperatorPage = () => {
             <button
               className="btn-end-round"
               onClick={endRoundAndAwardWinner}
-              disabled={isFinished || isResting}
+              disabled={isFinished || isResting || matchState.isTimerRunning}
             >
               End Round
             </button>
@@ -224,59 +202,113 @@ const OperatorPage = () => {
               </button>
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* Red Player Panel */}
-        <div
-          className={`panel player-panel red ${
-            isResting || isFinished ? "disabled-section" : ""
-          }`}
-        >
-          <h2 style={{ color: "var(--primary-red)" }}>RED</h2>
-          <div className="score-display">{matchState.red.score}</div>
-          <div className="gamjeom-display">
-            Gam-jeom: {matchState.red.gamJeom}
+        <footer className="controls-panel">
+          <div className="player-controls-group blue">
+            <h3>BLUE</h3>
+            <div className="score-buttons">
+              {[1, 2, 3, 4, 5].map((p) => (
+                <button
+                  key={`blue-p-${p}`}
+                  onClick={() => changeScore("blue", p)}
+                  disabled={isFinished || isResting}
+                >
+                  +{p}
+                </button>
+              ))}
+            </div>
+            <button
+              className="gamjeom-button"
+              onClick={() => addGamJeom("blue")}
+              disabled={isFinished || isResting}
+            >
+              Gam-jeom
+            </button>
           </div>
-          <div className="score-buttons">
-            {[1, 2, 3, 4, 5].map((p) => (
+
+          <div className="match-meta-controls">
+            <div className="round-win-editors-container">
+              <div className="round-win-editor">
+                <button
+                  onClick={() => changeRoundWins("blue", -1)}
+                  disabled={isFinished}
+                >
+                  -
+                </button>
+                <div className="round-wins blue">
+                  <span>BLUE</span>
+                  <span>{matchState.blue.roundWins}</span>
+                </div>
+                <button
+                  onClick={() => changeRoundWins("blue", 1)}
+                  disabled={isFinished}
+                >
+                  +
+                </button>
+              </div>
+              <div className="round-win-editor">
+                <button
+                  onClick={() => changeRoundWins("red", -1)}
+                  disabled={isFinished}
+                >
+                  -
+                </button>
+                <div className="round-wins red">
+                  <span>RED</span>
+                  <span>{matchState.red.roundWins}</span>
+                </div>
+                <button
+                  onClick={() => changeRoundWins("red", 1)}
+                  disabled={isFinished}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <div className="general-buttons-container">
               <button
-                key={`red-p-${p}`}
-                onClick={() => changeScore("red", p)}
-                disabled={isFinished || isResting}
+                className="btn-open-display"
+                onClick={() =>
+                  window.open("/display", "_blank", "noopener,noreferrer")
+                }
               >
-                +{p}
+                Open Display
               </button>
-            ))}
+              <button
+                className="btn-undo"
+                onClick={undoLastAction}
+                disabled={isResting}
+              >
+                Undo
+              </button>
+              <button className="btn-reset-match" onClick={resetMatch}>
+                Reset Match
+              </button>
+            </div>
           </div>
-          <button
-            className="gamjeom-button"
-            onClick={() => addGamJeom("red")}
-            disabled={isFinished || isResting}
-          >
-            Gam-jeom
-          </button>
-        </div>
 
-        {/* Footer Panel */}
-        <footer className="panel footer-panel">
-          <button
-            className="btn-open-display"
-            onClick={() =>
-              window.open("/display", "_blank", "noopener,noreferrer")
-            }
-          >
-            Open Display
-          </button>
-          <button
-            className="btn-undo"
-            onClick={undoLastAction}
-            disabled={isResting}
-          >
-            Undo Action
-          </button>
-          <button className="btn-reset-match" onClick={resetMatch}>
-            Reset Match
-          </button>
+          <div className="player-controls-group red">
+            <h3>RED</h3>
+            <div className="score-buttons">
+              {[1, 2, 3, 4, 5].map((p) => (
+                <button
+                  key={`red-p-${p}`}
+                  onClick={() => changeScore("red", p)}
+                  disabled={isFinished || isResting}
+                >
+                  +{p}
+                </button>
+              ))}
+            </div>
+            <button
+              className="gamjeom-button"
+              onClick={() => addGamJeom("red")}
+              disabled={isFinished || isResting}
+            >
+              Gam-jeom
+            </button>
+          </div>
         </footer>
       </div>
 
