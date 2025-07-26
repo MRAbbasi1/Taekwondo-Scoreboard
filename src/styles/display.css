@@ -133,3 +133,29 @@
 .round-number {
   font-size: 4rem;
 }
+
+/* --- STYLES FOR VIDEO CHECK --- */
+.video-check-indicator {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+}
+
+.blinking-light {
+  width: 20px;
+  height: 20px;
+  background-color: #ffc700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffc700, 0 0 20px #ffc700;
+  animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}

@@ -268,12 +268,12 @@ button:active:not(:disabled) {
   flex: 1.5;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
   border-left: 2px solid #4a555c;
   border-right: 2px solid #4a555c;
-  padding: 0 1.5rem;
+  padding: 0.5rem 1.5rem;
 }
 
 .base-point-selectors,
@@ -386,4 +386,49 @@ button:active:not(:disabled) {
   color: var(--primary-red);
   border-color: var(--primary-red);
   text-shadow: 0 0 15px var(--primary-red);
+}
+
+.video-check-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.video-check-btn {
+  flex: 1;
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  border: 2px solid #a3a3a3;
+  background-color: #4a545c;
+  color: #fff;
+}
+
+.video-check-btn.blue.active {
+  background-color: var(--primary-blue);
+  border-color: #fff;
+  box-shadow: 0 0 15px var(--primary-blue);
+}
+
+.video-check-btn.red.active {
+  background-color: var(--primary-red);
+  border-color: #fff;
+  box-shadow: 0 0 15px var(--primary-red);
+}
+
+.blinking-light {
+  width: 20px;
+  height: 20px;
+  background-color: #ffc700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffc700, 0 0 20px #ffc700;
+  animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
 }

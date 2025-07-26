@@ -5,6 +5,7 @@ import bodyIcon from "../assets/picture/body +2.png";
 import punchIcon from "../assets/picture/punch +1.png";
 import techHeadIcon from "../assets/picture/head technical+2.png";
 import techBodyIcon from "../assets/picture/body technical +2.png";
+import videoCheckIcon from "../assets/picture/video-check.svg";
 
 const pointTypes = {
   head: { icon: headIcon },
@@ -114,6 +115,19 @@ const DisplayPage = () => {
               />
             </div>
           </div>
+          {matchState.videoCheck === "blue" && (
+            <div className="video-check-indicator">
+              <img
+                src={videoCheckIcon}
+                alt="Video Check"
+                style={{ height: "50px" }}
+              />
+              <div
+                className="blinking-light"
+                style={{ width: "25px", height: "25px" }}
+              ></div>
+            </div>
+          )}
           <p className="gam-jeom">GAM-JEOM: {matchState.blue.gamJeom}</p>
         </div>
 
@@ -145,6 +159,19 @@ const DisplayPage = () => {
               />
             </div>
           </div>
+          {matchState.videoCheck === "red" && (
+            <div className="video-check-indicator">
+              <img
+                src={videoCheckIcon}
+                alt="Video Check"
+                style={{ height: "50px" }}
+              />
+              <div
+                className="blinking-light"
+                style={{ width: "25px", height: "25px" }}
+              ></div>
+            </div>
+          )}
           <p className="gam-jeom">GAM-JEOM: {matchState.red.gamJeom}</p>
         </div>
       </div>

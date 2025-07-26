@@ -68,6 +68,7 @@ export const MatchProvider = ({ children }) => {
     timer: 120000,
     isTimerRunning: false,
     isRestPeriod: false,
+    videoCheck: null, // New state: null, 'blue', or 'red'
     blue: { ...initialPlayerState, name: "BLUE" },
     red: { ...initialPlayerState, name: "RED" },
     status: "PRE_MATCH",
@@ -149,6 +150,7 @@ export const MatchProvider = ({ children }) => {
         status: newStatus,
         winner: finalWinner,
         isRestPeriod: isNowResting,
+        videoCheck: null, // Reset video check at end of round
         blue: { ...initialPlayerState, name: "BLUE", roundWins: newBlueWins },
         red: { ...initialPlayerState, name: "RED", roundWins: newRedWins },
       };
@@ -175,7 +177,10 @@ export const MatchProvider = ({ children }) => {
         red: { ...newState.red, score: redScore },
       };
 
-      const canCheckPTG = finalState.isTimerRunning && !finalState.isRestPeriod;
+      const canCheckPTG =
+        finalState.isTimerRunning &&
+        !finalState.isRestPeriod &&
+        !finalState.videoCheck;
       if (canCheckPTG && Math.abs(blueScore - redScore) >= 12) {
         const roundWinner = blueScore > redScore ? "blue" : "red";
         finalState = _handleRoundEnd(
@@ -200,21 +205,16 @@ export const MatchProvider = ({ children }) => {
       const { blue, red } = prev;
       const scoreDiff = Math.abs(blue.score - red.score);
 
-      // 1. Check for PTG (Point Gap) first
       if (scoreDiff >= 12) {
         roundWinner = blue.score > red.score ? "blue" : "red";
         winType = "Point Gap (PTG)";
-      }
-      // 2. If no PTG, check for PTF (Points)
-      else if (blue.score > red.score) {
+      } else if (blue.score > red.score) {
         roundWinner = "blue";
         winType = "Points (PTF)";
       } else if (red.score > blue.score) {
         roundWinner = "red";
         winType = "Points (PTF)";
-      }
-      // 3. If scores are tied, check for Superiority and Gam-jeom
-      else {
+      } else {
         const superiorityOrder = [
           "technicalHead",
           "technicalBody",
@@ -428,6 +428,10 @@ export const MatchProvider = ({ children }) => {
 
   const toggleTimer = useCallback(() => {
     guardedAction(() => {
+      if (matchState.videoCheck) {
+        setNotification("Cannot start timer during video check.", "error");
+        return;
+      }
       if (!matchState.isTimerRunning && matchState.timer <= 0) {
         setNotification("Timer is at 00:00. Please edit time.", "error");
         return;
@@ -437,7 +441,12 @@ export const MatchProvider = ({ children }) => {
         isTimerRunning: !prev.isTimerRunning,
       }));
     });
-  }, [matchState.status, matchState.timer, setNotification]);
+  }, [
+    matchState.status,
+    matchState.timer,
+    matchState.videoCheck,
+    setNotification,
+  ]);
 
   const setTimer = useCallback(
     (seconds) => {
@@ -472,6 +481,29 @@ export const MatchProvider = ({ children }) => {
       "info"
     );
   }, [matchState.round, setNotification]);
+
+  const handleVideoCheck = useCallback(
+    (player) => {
+      guardedAction(() => {
+        setMatchState((prev) => {
+          if (prev.videoCheck === player) {
+            setNotification("Video Check concluded.", "info");
+            return { ...prev, videoCheck: null };
+          }
+          setNotification(
+            `${player.toUpperCase()} has requested a Video Check.`,
+            "info"
+          );
+          return {
+            ...prev,
+            videoCheck: player,
+            isTimerRunning: false,
+          };
+        });
+      });
+    },
+    [setNotification]
+  );
 
   const resetMatch = useCallback(() => {
     setNotification("Match has been reset.", "info");
@@ -551,6 +583,7 @@ export const MatchProvider = ({ children }) => {
     changeRoundWins,
     startRest,
     skipRest,
+    handleVideoCheck,
   };
 
   return (

@@ -6,6 +6,7 @@ import bodyIcon from "../assets/picture/body +2.png";
 import punchIcon from "../assets/picture/punch +1.png";
 import techHeadIcon from "../assets/picture/head technical+2.png";
 import techBodyIcon from "../assets/picture/body technical +2.png";
+import videoCheckIcon from "../assets/picture/video-check.svg";
 
 const pointTypes = {
   head: { value: 3, icon: headIcon },
@@ -123,6 +124,23 @@ const DisplayPreview = ({ matchState }) => {
             {matchState.blue.score}
           </p>
           <PointsBreakdownDisplay breakdown={matchState.blue.pointsBreakdown} />
+          {matchState.videoCheck === "blue" && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "15px",
+                marginBottom: "10px",
+              }}
+            >
+              <img
+                src={videoCheckIcon}
+                alt="Video Check"
+                style={{ height: "40px" }}
+              />
+              <div className="blinking-light"></div>
+            </div>
+          )}
           <p style={{ fontSize: "1.5rem", color: "white" }}>
             GAM-JEOM: {matchState.blue.gamJeom}
           </p>
@@ -188,6 +206,23 @@ const DisplayPreview = ({ matchState }) => {
             {matchState.red.score}
           </p>
           <PointsBreakdownDisplay breakdown={matchState.red.pointsBreakdown} />
+          {matchState.videoCheck === "red" && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "15px",
+                marginBottom: "10px",
+              }}
+            >
+              <img
+                src={videoCheckIcon}
+                alt="Video Check"
+                style={{ height: "40px" }}
+              />
+              <div className="blinking-light"></div>
+            </div>
+          )}
           <p style={{ fontSize: "1.5rem", color: "white" }}>
             GAM-JEOM: {matchState.red.gamJeom}
           </p>
@@ -296,6 +331,8 @@ const CentralPointSelection = ({
   selectedSub,
   setSelectedSub,
   disabled,
+  onVideoCheck,
+  videoCheckPlayer,
 }) => {
   const handleBaseSelect = (base) => {
     if (selectedBase === base) {
@@ -367,6 +404,26 @@ const CentralPointSelection = ({
           </>
         )}
       </div>
+      <div className="video-check-controls">
+        <button
+          className={`video-check-btn blue ${
+            videoCheckPlayer === "blue" ? "active" : ""
+          }`}
+          onClick={() => onVideoCheck("blue")}
+          disabled={disabled}
+        >
+          Video Check BLUE
+        </button>
+        <button
+          className={`video-check-btn red ${
+            videoCheckPlayer === "red" ? "active" : ""
+          }`}
+          onClick={() => onVideoCheck("red")}
+          disabled={disabled}
+        >
+          Video Check RED
+        </button>
+      </div>
     </div>
   );
 };
@@ -387,6 +444,7 @@ const OperatorPage = () => {
     changeRoundWins,
     startRest,
     skipRest,
+    handleVideoCheck,
   } = useMatch();
 
   const [isEditingTime, setIsEditingTime] = useState(false);
@@ -587,20 +645,22 @@ const OperatorPage = () => {
             player="blue"
             onScoreAction={handleScoreAction}
             onGamJeomAction={handleGamJeom}
-            disabled={isControlDisabled}
+            disabled={isControlDisabled && !matchState.videoCheck}
           />
           <CentralPointSelection
             selectedBase={selectedBase}
             setSelectedBase={setSelectedBase}
             selectedSub={selectedSub}
             setSelectedSub={setSelectedSub}
-            disabled={isControlDisabled}
+            disabled={isControlDisabled && !matchState.videoCheck}
+            onVideoCheck={handleVideoCheck}
+            videoCheckPlayer={matchState.videoCheck}
           />
           <PlayerActionControls
             player="red"
             onScoreAction={handleScoreAction}
             onGamJeomAction={handleGamJeom}
-            disabled={isControlDisabled}
+            disabled={isControlDisabled && !matchState.videoCheck}
           />
         </footer>
       </div>
