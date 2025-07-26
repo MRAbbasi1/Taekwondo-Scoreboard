@@ -198,14 +198,23 @@ export const MatchProvider = ({ children }) => {
       let roundWinner = "",
         winType = "";
       const { blue, red } = prev;
+      const scoreDiff = Math.abs(blue.score - red.score);
 
-      if (blue.score > red.score) {
+      // 1. Check for PTG (Point Gap) first
+      if (scoreDiff >= 12) {
+        roundWinner = blue.score > red.score ? "blue" : "red";
+        winType = "Point Gap (PTG)";
+      }
+      // 2. If no PTG, check for PTF (Points)
+      else if (blue.score > red.score) {
         roundWinner = "blue";
         winType = "Points (PTF)";
       } else if (red.score > blue.score) {
         roundWinner = "red";
         winType = "Points (PTF)";
-      } else {
+      }
+      // 3. If scores are tied, check for Superiority and Gam-jeom
+      else {
         const superiorityOrder = [
           "technicalHead",
           "technicalBody",
