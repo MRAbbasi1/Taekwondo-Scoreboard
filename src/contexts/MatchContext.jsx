@@ -17,6 +17,37 @@ import restCountdownSoundSrc from "../assets/audio/B1.wav";
 const channel = new BroadcastChannel("taekwondo_scoreboard");
 const MatchContext = createContext();
 
+const initialPlayerState = {
+  score: 0,
+  gamJeom: 0,
+  roundWins: 0,
+  pointsBreakdown: {
+    head: 0,
+    body: 0,
+    punch: 0,
+    technicalHead: 0,
+    technicalBody: 0,
+    bodyKick: 0,
+  },
+  lastAction: null,
+};
+
+const calculateScore = (playerState) => {
+  const { pointsBreakdown } = playerState;
+  const breakdownScore =
+    pointsBreakdown.head * 3 +
+    pointsBreakdown.body * 2 +
+    pointsBreakdown.punch * 1 +
+    pointsBreakdown.technicalHead * 5 +
+    pointsBreakdown.technicalBody * 4 -
+    pointsBreakdown.bodyKick * 2;
+  return breakdownScore;
+};
+
+const calculateOpponentGamJeomScore = (opponentState) => {
+  return opponentState.gamJeom;
+};
+
 export const MatchProvider = ({ children }) => {
   const startSound = useRef(new Audio(startSoundSrc));
   const scoreSound = useRef(new Audio(scoreSoundSrc));
@@ -37,20 +68,8 @@ export const MatchProvider = ({ children }) => {
     timer: 120000,
     isTimerRunning: false,
     isRestPeriod: false,
-    blue: {
-      name: "BLUE",
-      score: 0,
-      gamJeom: 0,
-      roundWins: 0,
-      pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-    },
-    red: {
-      name: "RED",
-      score: 0,
-      gamJeom: 0,
-      roundWins: 0,
-      pointsBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
-    },
+    blue: { ...initialPlayerState, name: "BLUE" },
+    red: { ...initialPlayerState, name: "RED" },
     status: "PRE_MATCH",
     winner: null,
     notification: { message: "", type: "info", visible: false },
@@ -76,9 +95,26 @@ export const MatchProvider = ({ children }) => {
   const timerRef = useRef(null);
 
   const setMatchState = (updater) => {
-    history.current.push(matchState);
-    if (history.current.length > 30) history.current.shift();
-    _setMatchState(updater);
+    _setMatchState((prev) => {
+      const newState = typeof updater === "function" ? updater(prev) : updater;
+      const blueScore =
+        calculateScore(newState.blue) +
+        calculateOpponentGamJeomScore(newState.red);
+      const redScore =
+        calculateScore(newState.red) +
+        calculateOpponentGamJeomScore(newState.blue);
+
+      const finalState = {
+        ...newState,
+        blue: { ...newState.blue, score: blueScore },
+        red: { ...newState.red, score: redScore },
+      };
+
+      history.current.push(prev);
+      if (history.current.length > 30) history.current.shift();
+
+      return finalState;
+    });
   };
 
   const setNotification = useCallback(
@@ -106,17 +142,19 @@ export const MatchProvider = ({ children }) => {
     let newStatus = "PAUSED";
     let finalWinner = null;
     let isNowResting = false;
+
     if (newBlueWins >= 2) {
       newStatus = "FINISHED";
       finalWinner = "BLUE";
-    }
-    if (newRedWins >= 2) {
+    } else if (newRedWins >= 2) {
       newStatus = "FINISHED";
       finalWinner = "RED";
     }
+
     if (newStatus !== "FINISHED") {
       isNowResting = true;
     }
+
     return {
       ...prevState,
       round: newStatus === "FINISHED" ? prevState.round : prevState.round + 1,
@@ -126,24 +164,14 @@ export const MatchProvider = ({ children }) => {
       winner: finalWinner,
       isRestPeriod: isNowResting,
       blue: {
-        ...prevState.blue,
+        ...initialPlayerState,
+        name: "BLUE",
         roundWins: newBlueWins,
-        score: newStatus !== "FINISHED" ? 0 : prevState.blue.score,
-        gamJeom: newStatus !== "FINISHED" ? 0 : prevState.blue.gamJeom,
-        pointsBreakdown:
-          newStatus !== "FINISHED"
-            ? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-            : prevState.blue.pointsBreakdown,
       },
       red: {
-        ...prevState.red,
+        ...initialPlayerState,
+        name: "RED",
         roundWins: newRedWins,
-        score: newStatus !== "FINISHED" ? 0 : prevState.red.score,
-        gamJeom: newStatus !== "FINISHED" ? 0 : prevState.red.gamJeom,
-        pointsBreakdown:
-          newStatus !== "FINISHED"
-            ? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-            : prevState.red.pointsBreakdown,
       },
     };
   }, []);
@@ -154,6 +182,7 @@ export const MatchProvider = ({ children }) => {
       let roundWinner = "",
         winType = "";
       const { blue, red } = prev;
+
       if (blue.score > red.score) {
         roundWinner = "blue";
         winType = "Points (PTF)";
@@ -161,24 +190,39 @@ export const MatchProvider = ({ children }) => {
         roundWinner = "red";
         winType = "Points (PTF)";
       } else {
-        const pointValues = [5, 4, 3, 2, 1];
-        for (const value of pointValues) {
-          if (blue.pointsBreakdown[value] > red.pointsBreakdown[value]) {
+        const superiorityOrder = [
+          "technicalHead",
+          "technicalBody",
+          "head",
+          "body",
+          "punch",
+        ];
+        for (const type of superiorityOrder) {
+          if (blue.pointsBreakdown[type] > red.pointsBreakdown[type]) {
             roundWinner = "blue";
             winType = `Superiority (SUP)`;
             break;
           }
-          if (red.pointsBreakdown[value] > blue.pointsBreakdown[value]) {
+          if (red.pointsBreakdown[type] > red.pointsBreakdown[type]) {
             roundWinner = "red";
             winType = `Superiority (SUP)`;
             break;
           }
         }
+        if (!roundWinner && red.gamJeom > blue.gamJeom) {
+          roundWinner = "blue";
+          winType = "Fewer Gam-jeom (GAM)";
+        } else if (!roundWinner && blue.gamJeom > red.gamJeom) {
+          roundWinner = "red";
+          winType = "Fewer Gam-jeom (GAM)";
+        }
       }
+
       if (!roundWinner) {
         setNotification("Round is a Tie! No winner awarded.", "error");
         return { ...prev, isTimerRunning: false, status: "PAUSED" };
       }
+
       setNotification(
         `${roundWinner.toUpperCase()} wins Round ${prev.round} by ${winType}!`,
         "success"
@@ -200,13 +244,10 @@ export const MatchProvider = ({ children }) => {
       timerRef.current = setInterval(() => {
         _setMatchState((prev) => {
           if (!prev.isTimerRunning || prev.timer <= 0) return prev;
-
           const newTimer = Math.max(0, prev.timer - intervalRate);
-
           if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
             playSound(tenSecondSound);
           }
-
           if (prev.isRestPeriod && prev.timer > 0) {
             const previousSecond = Math.ceil(prev.timer / 1000);
             const currentSecond = Math.ceil(newTimer / 1000);
@@ -214,18 +255,16 @@ export const MatchProvider = ({ children }) => {
               playSound(restCountdownSound);
             }
           }
-
           return { ...prev, timer: newTimer };
         });
       }, intervalRate);
     }
     return () => clearInterval(timerRef.current);
-  }, [matchState.isTimerRunning, matchState.timer <= 10000]);
+  }, [matchState.isTimerRunning, matchState.timer, matchState.isRestPeriod]);
 
   useEffect(() => {
     if (matchState.timer <= 0 && matchState.isTimerRunning) {
       _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
-
       if (matchState.isRestPeriod) {
         setNotification(
           `Rest period over. Round ${matchState.round} is ready.`,
@@ -270,8 +309,8 @@ export const MatchProvider = ({ children }) => {
     action();
   };
 
-  const changeScore = useCallback(
-    (player, points) => {
+  const handlePointAction = useCallback(
+    (player, pointType, operation) => {
       guardedAction(() => {
         if (matchState.isRestPeriod) {
           setNotification("Cannot score during rest period.", "error");
@@ -279,59 +318,107 @@ export const MatchProvider = ({ children }) => {
         }
         playSound(scoreSound);
         setMatchState((prev) => {
-          const newScore = Math.max(0, prev[player].score + points);
-          const newBreakdown = { ...prev[player].pointsBreakdown };
-          if (points > 0 && newBreakdown[points] !== undefined)
-            newBreakdown[points]++;
-
-          const opponent = player === "blue" ? "red" : "blue";
-
-          if (
-            prev.isTimerRunning &&
-            Math.abs(newScore - prev[opponent].score) >= 12
-          ) {
-            const roundWinner =
-              newScore > prev[opponent].score ? player : opponent;
-            setNotification(
-              `${roundWinner.toUpperCase()} wins Round ${
-                prev.round
-              } by Point Gap (PTG)!`,
-              "success"
-            );
-            return _handleRoundEnd(
-              {
-                ...prev,
-                [player]: {
-                  ...prev[player],
-                  score: newScore,
-                  pointsBreakdown: newBreakdown,
-                },
-              },
-              roundWinner
-            );
+          const currentBreakdown = { ...prev[player].pointsBreakdown };
+          const currentVal = currentBreakdown[pointType];
+          if (operation === "add") {
+            currentBreakdown[pointType]++;
+          } else if (operation === "remove" && currentVal > 0) {
+            currentBreakdown[pointType]--;
+          } else {
+            setNotification(`No ${pointType} points to remove.`, "error");
+            return prev;
           }
           return {
             ...prev,
             [player]: {
               ...prev[player],
-              score: newScore,
-              pointsBreakdown: newBreakdown,
+              pointsBreakdown: currentBreakdown,
+              lastAction: pointType,
             },
           };
         });
       });
     },
-    [
-      matchState.status,
-      matchState.isRestPeriod,
-      matchState.isTimerRunning,
-      setNotification,
-      _handleRoundEnd,
-    ]
+    [matchState.status, matchState.isRestPeriod, setNotification]
   );
 
-  const addGamJeom = useCallback(
-    (player) => {
+  const handleBodyKick = useCallback(
+    (player, operation) => {
+      guardedAction(() => {
+        if (matchState.isRestPeriod) {
+          setNotification("Cannot score during rest period.", "error");
+          return;
+        }
+        playSound(penaltySound);
+        setMatchState((prev) => {
+          const currentBreakdown = { ...prev[player].pointsBreakdown };
+          const currentVal = currentBreakdown.bodyKick;
+          if (operation === "add") {
+            currentBreakdown.bodyKick++;
+            setNotification("-2 points for body kick.", "error");
+          } else if (operation === "remove" && currentVal > 0) {
+            currentBreakdown.bodyKick--;
+            setNotification("Body kick deduction removed.", "info");
+          } else {
+            setNotification(`No body kick to remove.`, "error");
+            return prev;
+          }
+          return {
+            ...prev,
+            [player]: {
+              ...prev[player],
+              pointsBreakdown: currentBreakdown,
+              lastAction: "bodyKick",
+            },
+          };
+        });
+      });
+    },
+    [matchState.status, matchState.isRestPeriod, setNotification]
+  );
+
+  const applyTechnicalBonus = useCallback(
+    (player, bonusType) => {
+      guardedAction(() => {
+        if (matchState.isRestPeriod) {
+          setNotification("Cannot apply bonus during rest period.", "error");
+          return;
+        }
+        setMatchState((prev) => {
+          const basePointType = bonusType === "head" ? "head" : "body";
+          const technicalPointType =
+            bonusType === "head" ? "technicalHead" : "technicalBody";
+          const currentBreakdown = { ...prev[player].pointsBreakdown };
+          if (currentBreakdown[basePointType] > 0) {
+            playSound(scoreSound);
+            currentBreakdown[basePointType]--;
+            currentBreakdown[technicalPointType]++;
+            setNotification(`Technical ${bonusType} bonus applied!`, "success");
+            return {
+              ...prev,
+              [player]: {
+                ...prev[player],
+                pointsBreakdown: currentBreakdown,
+                lastAction: technicalPointType,
+              },
+            };
+          } else {
+            setNotification(
+              `A regular +${
+                basePointType === "head" ? 3 : 2
+              } point must be registered first to apply this bonus.`,
+              "error"
+            );
+            return prev;
+          }
+        });
+      });
+    },
+    [matchState.status, matchState.isRestPeriod, setNotification]
+  );
+
+  const handleGamJeom = useCallback(
+    (player, operation) => {
       guardedAction(() => {
         if (matchState.isRestPeriod) {
           setNotification("Cannot give penalty during rest period.", "error");
@@ -339,11 +426,33 @@ export const MatchProvider = ({ children }) => {
         }
         playSound(penaltySound);
         setMatchState((prev) => {
-          const opponent = player === "blue" ? "red" : "blue";
+          const currentGamJeom = prev[player].gamJeom;
+          let newPlayerGamJeom;
+
+          if (operation === "add") {
+            newPlayerGamJeom = currentGamJeom + 1;
+            if (newPlayerGamJeom % 2 === 0) {
+              setNotification(
+                "This Gam-jeom does not award a point to the opponent",
+                "info"
+              );
+            } else {
+              setNotification("+1 point to the opponent for Gam-jeom", "info");
+            }
+          } else if (operation === "remove") {
+            if (currentGamJeom <= 0) {
+              setNotification("No Gam-jeom to remove.", "error");
+              return prev;
+            }
+            newPlayerGamJeom = currentGamJeom - 1;
+            setNotification("Gam-jeom removed.", "info");
+          } else {
+            return prev;
+          }
+
           return {
             ...prev,
-            [player]: { ...prev[player], gamJeom: prev[player].gamJeom + 1 },
-            [opponent]: { ...prev[opponent], score: prev[opponent].score + 1 },
+            [player]: { ...prev[player], gamJeom: newPlayerGamJeom },
           };
         });
       });
@@ -403,15 +512,12 @@ export const MatchProvider = ({ children }) => {
       guardedAction(() => {
         setMatchState((prev) => {
           const newRoundWins = Math.max(0, prev[player].roundWins + amount);
-          const opponent = player === "blue" ? "red" : "blue";
           const blueWins =
             player === "blue" ? newRoundWins : prev.blue.roundWins;
           const redWins = player === "red" ? newRoundWins : prev.red.roundWins;
-
           let newCurrentRound = blueWins + redWins + 1;
           let newStatus = "PAUSED";
           let finalWinner = null;
-
           if (blueWins >= 2) {
             newStatus = "FINISHED";
             finalWinner = "BLUE";
@@ -421,9 +527,7 @@ export const MatchProvider = ({ children }) => {
             finalWinner = "RED";
             newCurrentRound = blueWins + redWins;
           }
-
           newCurrentRound = Math.min(3, newCurrentRound);
-
           return {
             ...prev,
             round: newCurrentRound,
@@ -434,20 +538,24 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, setNotification]
+    [matchState.status]
   );
 
   const resetMatch = useCallback(() => {
     setNotification("Match has been reset.", "info");
     localStorage.removeItem("matchState");
-    history.current = [initialState];
-    _setMatchState(initialState);
+    const freshState = { ...initialState };
+    history.current = [freshState];
+    _setMatchState(freshState);
   }, [setNotification, initialState]);
 
   const value = {
     matchState,
-    changeScore,
-    addGamJeom,
+    setNotification,
+    handlePointAction,
+    applyTechnicalBonus,
+    handleGamJeom,
+    handleBodyKick,
     setTimer,
     toggleTimer,
     endRoundAndAwardWinner,

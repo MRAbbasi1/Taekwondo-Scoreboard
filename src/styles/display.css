@@ -1,5 +1,5 @@
 .display-container {
-  width: 100% !important;
+  width: 100vw;
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -8,6 +8,7 @@
   color: #fff;
   font-family: "Arial", sans-serif;
   font-weight: bold;
+  overflow: hidden;
 }
 
 .score-board {
@@ -34,22 +35,69 @@
   background: linear-gradient(to bottom, #ff0000, #470000);
 }
 
+.score-and-breakdown {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+}
+
+/* Wrapper for score and icons to be side-by-side */
+.score-with-icons-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 40px; /* فاصله بین امتیاز و ستون آیکون‌ها */
+}
+
 .score {
   font-size: 25rem;
   color: #fff;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
   margin: 0;
   line-height: 1;
-  flex-grow: 1;
+}
+
+/* This is now the vertical column for icons */
+.points-breakdown {
+  display: flex;
+  flex-direction: column; /* Vertical layout */
+  justify-content: center;
+  align-items: flex-start; /* Align items to the start (left) */
+  gap: 15px;
+}
+
+.breakdown-item {
   display: flex;
   align-items: center;
+  gap: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 5px 15px;
+  border-radius: 10px;
+}
+
+.breakdown-icon {
+  height: 50px;
+  width: auto;
+}
+
+.breakdown-counter {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffffff; /* رنگ عدد شمارنده سفید */
 }
 
 .gam-jeom {
   font-size: 2.5rem;
   color: #fff;
   text-shadow: none;
-  padding-bottom: 20px;
+  padding-bottom: 10px;
+  width: 100%;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .center-section {

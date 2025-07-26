@@ -1,65 +1,64 @@
 import React, { useState } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
+import headIcon from "../assets/picture/head +3.png";
+import bodyIcon from "../assets/picture/body +2.png";
+import punchIcon from "../assets/picture/punch +1.png";
+import techHeadIcon from "../assets/picture/head technical+2.png";
+import techBodyIcon from "../assets/picture/body technical +2.png";
 
-// کامپوننت ویرایشگر زمان (بدون تغییر)
-const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
-  const [minutes, setMinutes] = useState(
-    Math.floor(currentSeconds / 60)
-      .toString()
-      .padStart(2, "0")
-  );
-  const [seconds, setSeconds] = useState(
-    (currentSeconds % 60).toString().padStart(2, "0")
-  );
+const pointTypes = {
+  head: { value: 3, icon: headIcon },
+  body: { value: 2, icon: bodyIcon },
+  punch: { value: 1, icon: punchIcon },
+  technicalHead: { value: 5, icon: techHeadIcon },
+  technicalBody: { value: 4, icon: techBodyIcon },
+};
 
-  const handleSave = () => {
-    const totalSeconds =
-      (parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0);
-    onSave(totalSeconds);
-  };
-
+const PointsBreakdownDisplay = ({ breakdown }) => {
+  const order = ["technicalHead", "technicalBody", "head", "body", "punch"];
   return (
-    <div className="timer-editor-overlay">
-      <div className="timer-editor">
-        <h4>{title}</h4>
-        <div className="timer-inputs">
-          <input
-            type="number"
-            value={minutes}
-            onChange={(e) => setMinutes(e.target.value)}
-            min="0"
-            max="59"
-          />
-          <span>:</span>
-          <input
-            type="number"
-            value={seconds}
-            onChange={(e) => setSeconds(e.target.value)}
-            min="0"
-            max="59"
-          />
-        </div>
-        <div className="timer-editor-buttons">
-          <button onClick={handleSave} className="btn-save-time">
-            Save
-          </button>
-          <button onClick={onCancel} className="btn-cancel-time">
-            Cancel
-          </button>
-        </div>
-      </div>
+    <div
+      className="points-breakdown"
+      style={{
+        flexDirection: "row",
+        position: "static",
+        gap: "10px",
+        marginTop: "-20px",
+        marginBottom: "20px",
+      }}
+    >
+      {order.map((key) => {
+        const count = breakdown[key];
+        if (count > 0) {
+          return (
+            <div key={key} className="breakdown-item">
+              <img
+                src={pointTypes[key].icon}
+                alt={key}
+                className="breakdown-icon"
+                style={{ height: "30px", width: "30px" }}
+              />
+              <span
+                className="breakdown-counter"
+                style={{ fontSize: "1.5rem" }}
+              >
+                x{count}
+              </span>
+            </div>
+          );
+        }
+        return null;
+      })}
     </div>
   );
 };
 
-// کامپوننت پیش‌نمایش صفحه دیسپلی
 const DisplayPreview = ({ matchState }) => {
   const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
-
     if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
       const ms = Math.floor((milliseconds % 1000) / 10)
         .toString()
@@ -74,25 +73,70 @@ const DisplayPreview = ({ matchState }) => {
       <div className="display-container">Waiting for operator signal...</div>
     );
   }
-
   return (
-    <div className="display-container">
-      <div className="score-board">
-        {/* Blue Player */}
-        <div className="player-section blue">
-          <p className="score">{matchState.blue.score}</p>
-          <p className="gam-jeom">GAM-JEOM: {matchState.blue.gamJeom}</p>
+    <div className="display-container" style={{ fontFamily: "Arial" }}>
+      <div
+        className="score-board"
+        style={{ display: "flex", width: "100%", height: "100%" }}
+      >
+        <div
+          className="player-section blue"
+          style={{
+            flex: 2,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "10px",
+            background: "linear-gradient(to bottom, #0000ff, #00003a)",
+          }}
+        >
+          <p
+            className="score"
+            style={{
+              fontSize: "12rem",
+              color: "white",
+              margin: 0,
+              lineHeight: 1,
+            }}
+          >
+            {matchState.blue.score}
+          </p>
+          <PointsBreakdownDisplay breakdown={matchState.blue.pointsBreakdown} />
+          <p
+            className="gam-jeom"
+            style={{ fontSize: "1.5rem", color: "white" }}
+          >
+            GAM-JEOM: {matchState.blue.gamJeom}
+          </p>
         </div>
-
-        {/* Center Info */}
-        <div className="center-section">
+        <div
+          className="center-section"
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-around",
+            alignItems: "center",
+            background: "#000",
+          }}
+        >
           <div className="match-score">
             <span className="label">MATCH</span>
             <span className="score-text">
               {matchState.blue.roundWins} - {matchState.red.roundWins}
             </span>
           </div>
-          <div className="timer">
+          <div
+            className="timer"
+            style={{
+              width: "100%",
+              fontSize: "4rem",
+              background: "yellow",
+              color: "black",
+              textAlign: "center",
+            }}
+          >
             <FormattedTimer
               milliseconds={matchState.timer}
               isRestPeriod={matchState.isRestPeriod}
@@ -103,12 +147,233 @@ const DisplayPreview = ({ matchState }) => {
             <span className="round-number">{matchState.round}</span>
           </div>
         </div>
-
-        {/* Red Player */}
-        <div className="player-section red">
-          <p className="score">{matchState.red.score}</p>
-          <p className="gam-jeom">GAM-JEOM: {matchState.red.gamJeom}</p>
+        <div
+          className="player-section red"
+          style={{
+            flex: 2,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "10px",
+            background: "linear-gradient(to bottom, #ff0000, #470000)",
+          }}
+        >
+          <p
+            className="score"
+            style={{
+              fontSize: "12rem",
+              color: "white",
+              margin: 0,
+              lineHeight: 1,
+            }}
+          >
+            {matchState.red.score}
+          </p>
+          <PointsBreakdownDisplay breakdown={matchState.red.pointsBreakdown} />
+          <p
+            className="gam-jeom"
+            style={{ fontSize: "1.5rem", color: "white" }}
+          >
+            GAM-JEOM: {matchState.red.gamJeom}
+          </p>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
+  const [minutes, setMinutes] = useState(
+    Math.floor(currentSeconds / 60)
+      .toString()
+      .padStart(2, "0")
+  );
+  const [seconds, setSeconds] = useState(
+    (currentSeconds % 60).toString().padStart(2, "0")
+  );
+  const handleSave = () => {
+    onSave((parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0));
+  };
+  return (
+    <div
+      className="timer-editor-overlay"
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.75)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 50,
+      }}
+    >
+      <div
+        className="timer-editor"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "20px",
+          background: "#3e4850",
+          padding: "30px 40px",
+          borderRadius: "16px",
+        }}
+      >
+        <h4>{title}</h4>
+        <div className="timer-inputs">
+          <input
+            type="number"
+            value={minutes}
+            onChange={(e) => setMinutes(e.target.value)}
+            min="0"
+            max="59"
+            style={{ width: "120px", fontSize: "5rem", textAlign: "center" }}
+          />
+          <span>:</span>
+          <input
+            type="number"
+            value={seconds}
+            onChange={(e) => setSeconds(e.target.value)}
+            min="0"
+            max="59"
+            style={{ width: "120px", fontSize: "5rem", textAlign: "center" }}
+          />
+        </div>
+        <div className="timer-editor-buttons">
+          <button onClick={handleSave}>Save</button>
+          <button onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlayerActionControls = ({
+  player,
+  onScoreAction,
+  onGamJeomAction,
+  disabled,
+}) => {
+  const colorClass = player === "blue" ? "blue-text" : "red-text";
+
+  return (
+    <div className="player-action-controls">
+      <h3 className={colorClass}>{player.toUpperCase()}</h3>
+      <div className="action-group">
+        <button
+          className="action-button"
+          onClick={() => onScoreAction(player, "remove")}
+          disabled={disabled}
+        >
+          -
+        </button>
+        <span className={`action-label ${colorClass}`}>SCORE</span>
+        <button
+          className="action-button"
+          onClick={() => onScoreAction(player, "add")}
+          disabled={disabled}
+        >
+          +
+        </button>
+      </div>
+      <div className="action-group">
+        <button
+          className="action-button"
+          onClick={() => onGamJeomAction(player, "remove")}
+          disabled={disabled}
+        >
+          -
+        </button>
+        <span className={`action-label ${colorClass}`}>GAM JUM</span>
+        <button
+          className="action-button"
+          onClick={() => onGamJeomAction(player, "add")}
+          disabled={disabled}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CentralPointSelection = ({
+  selectedBase,
+  setSelectedBase,
+  selectedSub,
+  setSelectedSub,
+  disabled,
+}) => {
+  const handleBaseSelect = (base) => {
+    if (selectedBase === base) {
+      setSelectedBase(null);
+      setSelectedSub(null);
+    } else {
+      setSelectedBase(base);
+      setSelectedSub(null);
+    }
+  };
+
+  const handleSubSelect = (sub) => {
+    if (selectedSub === sub) {
+      setSelectedSub(null);
+    } else {
+      setSelectedSub(sub);
+    }
+  };
+
+  return (
+    <div className="central-point-selection">
+      <div className="base-point-selectors">
+        <button
+          className={selectedBase === "head" ? "selected" : ""}
+          onClick={() => handleBaseSelect("head")}
+          disabled={disabled}
+        >
+          Head (+3)
+        </button>
+        <button
+          className={selectedBase === "body" ? "selected" : ""}
+          onClick={() => handleBaseSelect("body")}
+          disabled={disabled}
+        >
+          Body (+2)
+        </button>
+        <button
+          className={selectedBase === "punch" ? "selected" : ""}
+          onClick={() => handleBaseSelect("punch")}
+          disabled={disabled}
+        >
+          Punch (+1)
+        </button>
+      </div>
+      <div className="sub-point-selectors">
+        {selectedBase === "body" && (
+          <>
+            <button
+              className={selectedSub === "headTechnical" ? "selected" : ""}
+              onClick={() => handleSubSelect("headTechnical")}
+              disabled={disabled}
+            >
+              Head Technical
+            </button>
+            <button
+              className={selectedSub === "bodyTechnical" ? "selected" : ""}
+              onClick={() => handleSubSelect("bodyTechnical")}
+              disabled={disabled}
+            >
+              Body Technical
+            </button>
+            <button
+              className={selectedSub === "bodyKick" ? "selected" : ""}
+              onClick={() => handleSubSelect("bodyKick")}
+              disabled={disabled}
+            >
+              Body Kick
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -117,8 +382,11 @@ const DisplayPreview = ({ matchState }) => {
 const OperatorPage = () => {
   const {
     matchState,
-    changeScore,
-    addGamJeom,
+    setNotification,
+    handlePointAction,
+    applyTechnicalBonus,
+    handleBodyKick,
+    handleGamJeom,
     setTimer,
     toggleTimer,
     endRoundAndAwardWinner,
@@ -130,21 +398,52 @@ const OperatorPage = () => {
   } = useMatch();
 
   const [isEditingTime, setIsEditingTime] = useState(false);
+  const [selectedBase, setSelectedBase] = useState(null);
+  const [selectedSub, setSelectedSub] = useState(null);
+
   const isFinished = matchState.status === "FINISHED";
   const isResting = matchState.isRestPeriod;
+  const isControlDisabled = isFinished || isResting;
+
+  const handleScoreAction = (player, operation) => {
+    if (!selectedBase) {
+      setNotification(
+        "ابتدا یک امتیاز پایه (مثلاً Body +2) را انتخاب کنید.",
+        "error"
+      );
+      return;
+    }
+
+    if (selectedSub) {
+      switch (selectedSub) {
+        case "headTechnical":
+          if (operation === "add") applyTechnicalBonus(player, "head");
+          else setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          break;
+        case "bodyTechnical":
+          if (operation === "add") applyTechnicalBonus(player, "body");
+          else setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          break;
+        case "bodyKick":
+          handleBodyKick(player, operation);
+          break;
+        default:
+          break;
+      }
+    } else {
+      handlePointAction(player, selectedBase, operation);
+    }
+  };
 
   const handleEditTimeClick = () => {
     if (matchState.isTimerRunning) toggleTimer();
     setIsEditingTime(true);
   };
-
   const OperatorFormattedTimer = ({ milliseconds }) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${secs
+    return `${Math.floor(totalSeconds / 60)
       .toString()
-      .padStart(2, "0")}`;
+      .padStart(2, "0")}:${(totalSeconds % 60).toString().padStart(2, "0")}`;
   };
 
   return (
@@ -155,117 +454,56 @@ const OperatorPage = () => {
         </main>
 
         <aside className={`sidebar-panel ${isResting ? "resting" : ""}`}>
-          <div className="round-display">ROUND: {matchState.round}</div>
-          <div className="timer-display">
-            <OperatorFormattedTimer milliseconds={matchState.timer} />
-          </div>
-          <button
-            className="btn-edit-time"
-            onClick={handleEditTimeClick}
-            disabled={isFinished}
-          >
-            Edit Time
-          </button>
-          <div className="main-controls">
+          <div className="top-sidebar">
+            <div className="round-display">ROUND: {matchState.round}</div>
+            <div className="timer-display">
+              <OperatorFormattedTimer milliseconds={matchState.timer} />
+            </div>
             <button
-              className={`btn-timer ${
-                matchState.isTimerRunning ? "running" : "stopped"
-              }`}
-              onClick={toggleTimer}
+              className="btn-edit-time"
+              onClick={handleEditTimeClick}
               disabled={isFinished}
             >
-              {isResting
-                ? matchState.isTimerRunning
-                  ? "Pause Rest"
-                  : "Start Rest"
-                : matchState.isTimerRunning
-                ? "Stop Timer"
-                : "Start Timer"}
+              Edit Time
             </button>
-            <button
-              className="btn-end-round"
-              onClick={endRoundAndAwardWinner}
-              disabled={isFinished || isResting || matchState.isTimerRunning}
-            >
-              End Round
-            </button>
-            <button
-              className="btn-rest"
-              onClick={startRest}
-              disabled={isFinished || matchState.isTimerRunning}
-            >
-              Manual Rest
-            </button>
-            {isResting && (
-              <button className="btn-skip-rest" onClick={skipRest}>
-                Skip Rest
+            <div className="main-controls">
+              <button
+                className={`btn-timer ${
+                  matchState.isTimerRunning ? "running" : "stopped"
+                }`}
+                onClick={toggleTimer}
+                disabled={isFinished}
+              >
+                {isResting
+                  ? matchState.isTimerRunning
+                    ? "Pause Rest"
+                    : "Start Rest"
+                  : matchState.isTimerRunning
+                  ? "Stop Timer"
+                  : "Start Timer"}
               </button>
-            )}
-          </div>
-        </aside>
-
-        <footer className="controls-panel">
-          <div className="player-controls-group blue">
-            <h3>BLUE</h3>
-            <div className="score-buttons">
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button
-                  key={`blue-p-${p}`}
-                  onClick={() => changeScore("blue", p)}
-                  disabled={isFinished || isResting}
-                >
-                  +{p}
+              <button
+                className="btn-end-round"
+                onClick={endRoundAndAwardWinner}
+                disabled={isFinished || isResting || matchState.isTimerRunning}
+              >
+                End Round
+              </button>
+              <button
+                className="btn-rest"
+                onClick={startRest}
+                disabled={isFinished || matchState.isTimerRunning}
+              >
+                Manual Rest
+              </button>
+              {isResting && (
+                <button className="btn-skip-rest" onClick={skipRest}>
+                  Skip Rest
                 </button>
-              ))}
+              )}
             </div>
-            <button
-              className="gamjeom-button"
-              onClick={() => addGamJeom("blue")}
-              disabled={isFinished || isResting}
-            >
-              Gam-jeom
-            </button>
           </div>
-
-          <div className="match-meta-controls">
-            <div className="round-win-editors-container">
-              <div className="round-win-editor">
-                <button
-                  onClick={() => changeRoundWins("blue", -1)}
-                  disabled={isFinished}
-                >
-                  -
-                </button>
-                <div className="round-wins blue">
-                  <span>BLUE</span>
-                  <span>{matchState.blue.roundWins}</span>
-                </div>
-                <button
-                  onClick={() => changeRoundWins("blue", 1)}
-                  disabled={isFinished}
-                >
-                  +
-                </button>
-              </div>
-              <div className="round-win-editor">
-                <button
-                  onClick={() => changeRoundWins("red", -1)}
-                  disabled={isFinished}
-                >
-                  -
-                </button>
-                <div className="round-wins red">
-                  <span>RED</span>
-                  <span>{matchState.red.roundWins}</span>
-                </div>
-                <button
-                  onClick={() => changeRoundWins("red", 1)}
-                  disabled={isFinished}
-                >
-                  +
-                </button>
-              </div>
-            </div>
+          <div className="bottom-sidebar">
             <div className="general-buttons-container">
               <button
                 className="btn-open-display"
@@ -286,33 +524,72 @@ const OperatorPage = () => {
                 Reset Match
               </button>
             </div>
-          </div>
-
-          <div className="player-controls-group red">
-            <h3>RED</h3>
-            <div className="score-buttons">
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button
-                  key={`red-p-${p}`}
-                  onClick={() => changeScore("red", p)}
-                  disabled={isFinished || isResting}
-                >
-                  +{p}
-                </button>
-              ))}
+            <div className="match-meta-controls">
+              <div className="round-win-editors-container">
+                <div className="round-win-editor">
+                  <button
+                    onClick={() => changeRoundWins("blue", -1)}
+                    disabled={isFinished}
+                  >
+                    -
+                  </button>
+                  <div className="round-wins blue">
+                    <span>BLUE</span>
+                    <span>{matchState.blue.roundWins}</span>
+                  </div>
+                  <button
+                    onClick={() => changeRoundWins("blue", 1)}
+                    disabled={isFinished}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="round-win-editor">
+                  <button
+                    onClick={() => changeRoundWins("red", -1)}
+                    disabled={isFinished}
+                  >
+                    -
+                  </button>
+                  <div className="round-wins red">
+                    <span>RED</span>
+                    <span>{matchState.red.roundWins}</span>
+                  </div>
+                  <button
+                    onClick={() => changeRoundWins("red", 1)}
+                    disabled={isFinished}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
-            <button
-              className="gamjeom-button"
-              onClick={() => addGamJeom("red")}
-              disabled={isFinished || isResting}
-            >
-              Gam-jeom
-            </button>
           </div>
+        </aside>
+
+        <footer className="controls-panel">
+          <PlayerActionControls
+            player="blue"
+            onScoreAction={handleScoreAction}
+            onGamJeomAction={handleGamJeom}
+            disabled={isControlDisabled}
+          />
+          <CentralPointSelection
+            selectedBase={selectedBase}
+            setSelectedBase={setSelectedBase}
+            selectedSub={selectedSub}
+            setSelectedSub={setSelectedSub}
+            disabled={isControlDisabled}
+          />
+          <PlayerActionControls
+            player="red"
+            onScoreAction={handleScoreAction}
+            onGamJeomAction={handleGamJeom}
+            disabled={isControlDisabled}
+          />
         </footer>
       </div>
 
-      {/* Overlays */}
       {isEditingTime && (
         <TimerEditor
           currentSeconds={Math.round(matchState.timer / 1000)}
