@@ -400,7 +400,7 @@ const OperatorPage = () => {
   const handleScoreAction = (player, operation) => {
     if (!selectedBase) {
       setNotification(
-        "ابتدا یک امتیاز پایه (1, 2, 3) را انتخاب کنید.",
+        "Please select a base point type (1, 2, 3) first.",
         "error"
       );
       return;
@@ -415,7 +415,10 @@ const OperatorPage = () => {
             applyTechnicalBonus(player, "head");
             actionTaken = true;
           } else {
-            setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+            setNotification(
+              "This action is not valid for subtraction.",
+              "error"
+            );
           }
           break;
         case "bodyTechnical":
@@ -423,7 +426,10 @@ const OperatorPage = () => {
             applyTechnicalBonus(player, "body");
             actionTaken = true;
           } else {
-            setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+            setNotification(
+              "This action is not valid for subtraction.",
+              "error"
+            );
           }
           break;
         case "bodyKick":
@@ -610,20 +616,15 @@ const OperatorPage = () => {
           title={isResting ? "Edit Rest Time" : "Edit Match Time"}
         />
       )}
+
       {matchState.winner && (
         <h1
-          className="final-winner-text"
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 100,
-          }}
+          className={`final-winner-text winner-${matchState.winner.toLowerCase()}`}
         >
           WINNER: {matchState.winner}
         </h1>
       )}
+
       <div
         className={`notification ${matchState.notification.type} ${
           matchState.notification.visible ? "show" : ""

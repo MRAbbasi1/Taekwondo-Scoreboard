@@ -94,29 +94,6 @@ export const MatchProvider = ({ children }) => {
   const notificationTimerRef = useRef(null);
   const timerRef = useRef(null);
 
-  const setMatchState = (updater) => {
-    _setMatchState((prev) => {
-      const newState = typeof updater === "function" ? updater(prev) : updater;
-      const blueScore =
-        calculateScore(newState.blue) +
-        calculateOpponentGamJeomScore(newState.red);
-      const redScore =
-        calculateScore(newState.red) +
-        calculateOpponentGamJeomScore(newState.blue);
-
-      const finalState = {
-        ...newState,
-        blue: { ...newState.blue, score: blueScore },
-        red: { ...newState.red, score: redScore },
-      };
-
-      history.current.push(prev);
-      if (history.current.length > 30) history.current.shift();
-
-      return finalState;
-    });
-  };
-
   const setNotification = useCallback(
     (message, type = "info", duration = 4000) => {
       clearTimeout(notificationTimerRef.current);
@@ -134,51 +111,90 @@ export const MatchProvider = ({ children }) => {
     []
   );
 
-  const _handleRoundEnd = useCallback((prevState, roundWinner) => {
-    const newBlueWins =
-      prevState.blue.roundWins + (roundWinner === "blue" ? 1 : 0);
-    const newRedWins =
-      prevState.red.roundWins + (roundWinner === "red" ? 1 : 0);
-    let newStatus = "PAUSED";
-    let finalWinner = null;
-    let isNowResting = false;
+  const _handleRoundEnd = useCallback(
+    (prevState, roundWinner, winType) => {
+      playSound(endSound);
+      const newBlueWins =
+        prevState.blue.roundWins + (roundWinner === "blue" ? 1 : 0);
+      const newRedWins =
+        prevState.red.roundWins + (roundWinner === "red" ? 1 : 0);
+      let newStatus = "PAUSED";
+      let finalWinner = null;
+      let isNowResting = false;
 
-    if (newBlueWins >= 2) {
-      newStatus = "FINISHED";
-      finalWinner = "BLUE";
-    } else if (newRedWins >= 2) {
-      newStatus = "FINISHED";
-      finalWinner = "RED";
-    }
+      setNotification(
+        `${roundWinner.toUpperCase()} wins Round ${
+          prevState.round
+        } by ${winType}!`,
+        "success"
+      );
 
-    if (newStatus !== "FINISHED") {
-      isNowResting = true;
-    }
+      if (newBlueWins >= 2) {
+        newStatus = "FINISHED";
+        finalWinner = "BLUE";
+      } else if (newRedWins >= 2) {
+        newStatus = "FINISHED";
+        finalWinner = "RED";
+      }
 
-    return {
-      ...prevState,
-      round: newStatus === "FINISHED" ? prevState.round : prevState.round + 1,
-      timer: isNowResting ? 60000 : 120000,
-      isTimerRunning: false,
-      status: newStatus,
-      winner: finalWinner,
-      isRestPeriod: isNowResting,
-      blue: {
-        ...initialPlayerState,
-        name: "BLUE",
-        roundWins: newBlueWins,
-      },
-      red: {
-        ...initialPlayerState,
-        name: "RED",
-        roundWins: newRedWins,
-      },
-    };
-  }, []);
+      if (newStatus !== "FINISHED") {
+        isNowResting = true;
+      }
+
+      return {
+        ...prevState,
+        round: newStatus === "FINISHED" ? prevState.round : prevState.round + 1,
+        timer: isNowResting ? 60000 : 120000,
+        isTimerRunning: false,
+        status: newStatus,
+        winner: finalWinner,
+        isRestPeriod: isNowResting,
+        blue: { ...initialPlayerState, name: "BLUE", roundWins: newBlueWins },
+        red: { ...initialPlayerState, name: "RED", roundWins: newRedWins },
+      };
+    },
+    [setNotification, endSound]
+  );
+
+  const setMatchState = (updater) => {
+    _setMatchState((prev) => {
+      if (prev.status === "FINISHED") return prev;
+
+      const newState = typeof updater === "function" ? updater(prev) : updater;
+
+      const blueScore =
+        calculateScore(newState.blue) +
+        calculateOpponentGamJeomScore(newState.red);
+      const redScore =
+        calculateScore(newState.red) +
+        calculateOpponentGamJeomScore(newState.blue);
+
+      let finalState = {
+        ...newState,
+        blue: { ...newState.blue, score: blueScore },
+        red: { ...newState.red, score: redScore },
+      };
+
+      const canCheckPTG = finalState.isTimerRunning && !finalState.isRestPeriod;
+      if (canCheckPTG && Math.abs(blueScore - redScore) >= 12) {
+        const roundWinner = blueScore > redScore ? "blue" : "red";
+        finalState = _handleRoundEnd(
+          finalState,
+          roundWinner,
+          "Point Gap (PTG)"
+        );
+      }
+
+      history.current.push(prev);
+      if (history.current.length > 30) history.current.shift();
+
+      return finalState;
+    });
+  };
 
   const endRoundAndAwardWinner = useCallback(() => {
-    playSound(endSound);
     setMatchState((prev) => {
+      if (prev.isTimerRunning) return prev;
       let roundWinner = "",
         winType = "";
       const { blue, red } = prev;
@@ -203,7 +219,7 @@ export const MatchProvider = ({ children }) => {
             winType = `Superiority (SUP)`;
             break;
           }
-          if (red.pointsBreakdown[type] > red.pointsBreakdown[type]) {
+          if (red.pointsBreakdown[type] > blue.pointsBreakdown[type]) {
             roundWinner = "red";
             winType = `Superiority (SUP)`;
             break;
@@ -223,80 +239,9 @@ export const MatchProvider = ({ children }) => {
         return { ...prev, isTimerRunning: false, status: "PAUSED" };
       }
 
-      setNotification(
-        `${roundWinner.toUpperCase()} wins Round ${prev.round} by ${winType}!`,
-        "success"
-      );
-      return _handleRoundEnd(prev, roundWinner);
+      return _handleRoundEnd(prev, roundWinner, winType);
     });
-  }, [setNotification, _handleRoundEnd]);
-
-  useEffect(() => {
-    localStorage.setItem("matchState", JSON.stringify(matchState));
-    channel.postMessage(matchState);
-  }, [matchState]);
-
-  useEffect(() => {
-    if (matchState.isTimerRunning) {
-      const isFastMode = matchState.timer <= 10000 && !matchState.isRestPeriod;
-      const intervalRate = isFastMode ? 47 : 250;
-
-      timerRef.current = setInterval(() => {
-        _setMatchState((prev) => {
-          if (!prev.isTimerRunning || prev.timer <= 0) return prev;
-          const newTimer = Math.max(0, prev.timer - intervalRate);
-          if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
-            playSound(tenSecondSound);
-          }
-          if (prev.isRestPeriod && prev.timer > 0) {
-            const previousSecond = Math.ceil(prev.timer / 1000);
-            const currentSecond = Math.ceil(newTimer / 1000);
-            if (currentSecond < previousSecond && currentSecond <= 5) {
-              playSound(restCountdownSound);
-            }
-          }
-          return { ...prev, timer: newTimer };
-        });
-      }, intervalRate);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [matchState.isTimerRunning, matchState.timer, matchState.isRestPeriod]);
-
-  useEffect(() => {
-    if (matchState.timer <= 0 && matchState.isTimerRunning) {
-      _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
-      if (matchState.isRestPeriod) {
-        setNotification(
-          `Rest period over. Round ${matchState.round} is ready.`,
-          "info"
-        );
-        _setMatchState((prev) => ({
-          ...prev,
-          isRestPeriod: false,
-          timer: 120000,
-        }));
-      } else {
-        endRoundAndAwardWinner();
-      }
-    }
-  }, [
-    matchState.timer,
-    matchState.isTimerRunning,
-    matchState.isRestPeriod,
-    matchState.round,
-    endRoundAndAwardWinner,
-    setNotification,
-  ]);
-
-  const undoLastAction = useCallback(() => {
-    if (history.current.length > 1) {
-      const prevState = history.current.pop();
-      _setMatchState(prevState);
-      setNotification("Last action undone.", "info", 2000);
-    } else {
-      setNotification("No more actions to undo.", "error", 2000);
-    }
-  }, [setNotification]);
+  }, [_handleRoundEnd, setNotification]);
 
   const guardedAction = (action) => {
     if (matchState.status === "FINISHED") {
@@ -309,6 +254,16 @@ export const MatchProvider = ({ children }) => {
     action();
   };
 
+  const changeRoundWins = useCallback((player, amount) => {
+    setMatchState((prev) => {
+      const newRoundWins = Math.max(0, prev[player].roundWins + amount);
+      return {
+        ...prev,
+        [player]: { ...prev[player], roundWins: newRoundWins },
+      };
+    });
+  }, []);
+
   const handlePointAction = useCallback(
     (player, pointType, operation) => {
       guardedAction(() => {
@@ -319,10 +274,12 @@ export const MatchProvider = ({ children }) => {
         playSound(scoreSound);
         setMatchState((prev) => {
           const currentBreakdown = { ...prev[player].pointsBreakdown };
-          const currentVal = currentBreakdown[pointType];
           if (operation === "add") {
             currentBreakdown[pointType]++;
-          } else if (operation === "remove" && currentVal > 0) {
+          } else if (
+            operation === "remove" &&
+            currentBreakdown[pointType] > 0
+          ) {
             currentBreakdown[pointType]--;
           } else {
             setNotification(`No ${pointType} points to remove.`, "error");
@@ -339,7 +296,7 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, matchState.isRestPeriod, setNotification]
+    [matchState.isRestPeriod, matchState.status, setNotification]
   );
 
   const handleBodyKick = useCallback(
@@ -352,11 +309,10 @@ export const MatchProvider = ({ children }) => {
         playSound(penaltySound);
         setMatchState((prev) => {
           const currentBreakdown = { ...prev[player].pointsBreakdown };
-          const currentVal = currentBreakdown.bodyKick;
           if (operation === "add") {
             currentBreakdown.bodyKick++;
             setNotification("-2 points for body kick.", "error");
-          } else if (operation === "remove" && currentVal > 0) {
+          } else if (operation === "remove" && currentBreakdown.bodyKick > 0) {
             currentBreakdown.bodyKick--;
             setNotification("Body kick deduction removed.", "info");
           } else {
@@ -374,7 +330,7 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, matchState.isRestPeriod, setNotification]
+    [matchState.isRestPeriod, matchState.status, setNotification]
   );
 
   const applyTechnicalBonus = useCallback(
@@ -414,7 +370,7 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, matchState.isRestPeriod, setNotification]
+    [matchState.isRestPeriod, matchState.status, setNotification]
   );
 
   const handleGamJeom = useCallback(
@@ -428,17 +384,9 @@ export const MatchProvider = ({ children }) => {
         setMatchState((prev) => {
           const currentGamJeom = prev[player].gamJeom;
           let newPlayerGamJeom;
-
           if (operation === "add") {
             newPlayerGamJeom = currentGamJeom + 1;
-            if (newPlayerGamJeom % 2 === 0) {
-              setNotification(
-                "This Gam-jeom does not award a point to the opponent",
-                "info"
-              );
-            } else {
-              setNotification("+1 point to the opponent for Gam-jeom", "info");
-            }
+            setNotification("+1 point to the opponent for Gam-jeom.", "info");
           } else if (operation === "remove") {
             if (currentGamJeom <= 0) {
               setNotification("No Gam-jeom to remove.", "error");
@@ -449,7 +397,6 @@ export const MatchProvider = ({ children }) => {
           } else {
             return prev;
           }
-
           return {
             ...prev,
             [player]: { ...prev[player], gamJeom: newPlayerGamJeom },
@@ -457,8 +404,18 @@ export const MatchProvider = ({ children }) => {
         });
       });
     },
-    [matchState.status, matchState.isRestPeriod, setNotification]
+    [matchState.isRestPeriod, matchState.status, setNotification]
   );
+
+  const undoLastAction = useCallback(() => {
+    if (history.current.length > 1) {
+      const prevState = history.current.pop();
+      _setMatchState(prevState);
+      setNotification("Last action undone.", "info", 2000);
+    } else {
+      setNotification("No more actions to undo.", "error", 2000);
+    }
+  }, [setNotification]);
 
   const toggleTimer = useCallback(() => {
     guardedAction(() => {
@@ -507,47 +464,68 @@ export const MatchProvider = ({ children }) => {
     );
   }, [matchState.round, setNotification]);
 
-  const changeRoundWins = useCallback(
-    (player, amount) => {
-      guardedAction(() => {
-        setMatchState((prev) => {
-          const newRoundWins = Math.max(0, prev[player].roundWins + amount);
-          const blueWins =
-            player === "blue" ? newRoundWins : prev.blue.roundWins;
-          const redWins = player === "red" ? newRoundWins : prev.red.roundWins;
-          let newCurrentRound = blueWins + redWins + 1;
-          let newStatus = "PAUSED";
-          let finalWinner = null;
-          if (blueWins >= 2) {
-            newStatus = "FINISHED";
-            finalWinner = "BLUE";
-            newCurrentRound = blueWins + redWins;
-          } else if (redWins >= 2) {
-            newStatus = "FINISHED";
-            finalWinner = "RED";
-            newCurrentRound = blueWins + redWins;
-          }
-          newCurrentRound = Math.min(3, newCurrentRound);
-          return {
-            ...prev,
-            round: newCurrentRound,
-            status: newStatus,
-            winner: finalWinner,
-            [player]: { ...prev[player], roundWins: newRoundWins },
-          };
-        });
-      });
-    },
-    [matchState.status]
-  );
-
   const resetMatch = useCallback(() => {
     setNotification("Match has been reset.", "info");
     localStorage.removeItem("matchState");
-    const freshState = { ...initialState };
-    history.current = [freshState];
-    _setMatchState(freshState);
+    _setMatchState(initialState);
+    history.current = [initialState];
   }, [setNotification, initialState]);
+
+  useEffect(() => {
+    localStorage.setItem("matchState", JSON.stringify(matchState));
+    channel.postMessage(matchState);
+  }, [matchState]);
+
+  useEffect(() => {
+    if (matchState.isTimerRunning) {
+      const isFastMode = matchState.timer <= 10000 && !matchState.isRestPeriod;
+      const intervalRate = isFastMode ? 47 : 250;
+      timerRef.current = setInterval(() => {
+        _setMatchState((prev) => {
+          if (!prev.isTimerRunning || prev.timer <= 0) return prev;
+          const newTimer = Math.max(0, prev.timer - intervalRate);
+          if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
+            playSound(tenSecondSound);
+          }
+          if (prev.isRestPeriod && prev.timer > 0) {
+            const previousSecond = Math.ceil(prev.timer / 1000);
+            const currentSecond = Math.ceil(newTimer / 1000);
+            if (currentSecond < previousSecond && currentSecond <= 5) {
+              playSound(restCountdownSound);
+            }
+          }
+          return { ...prev, timer: newTimer };
+        });
+      }, intervalRate);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [matchState.isTimerRunning, matchState.timer, matchState.isRestPeriod]);
+
+  useEffect(() => {
+    if (matchState.timer <= 0 && matchState.isTimerRunning) {
+      _setMatchState((prev) => ({ ...prev, isTimerRunning: false }));
+      if (matchState.isRestPeriod) {
+        setNotification(
+          `Rest period over. Round ${matchState.round} is ready.`,
+          "info"
+        );
+        _setMatchState((prev) => ({
+          ...prev,
+          isRestPeriod: false,
+          timer: 120000,
+        }));
+      } else {
+        endRoundAndAwardWinner();
+      }
+    }
+  }, [
+    matchState.timer,
+    matchState.isTimerRunning,
+    matchState.isRestPeriod,
+    matchState.round,
+    endRoundAndAwardWinner,
+    setNotification,
+  ]);
 
   const value = {
     matchState,
