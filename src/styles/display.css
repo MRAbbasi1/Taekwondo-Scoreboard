@@ -44,13 +44,12 @@
   width: 100%;
 }
 
-/* Wrapper for score and icons to be side-by-side */
 .score-with-icons-wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 40px; /* فاصله بین امتیاز و ستون آیکون‌ها */
+  gap: 4rem;
 }
 
 .score {
@@ -61,33 +60,32 @@
   line-height: 1;
 }
 
-/* This is now the vertical column for icons */
 .points-breakdown {
   display: flex;
-  flex-direction: column; /* Vertical layout */
+  flex-direction: column;
   justify-content: center;
-  align-items: flex-start; /* Align items to the start (left) */
-  gap: 15px;
+  align-items: flex-start;
+  gap: 1.5rem;
 }
 
 .breakdown-item {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1.5rem;
   background-color: rgba(0, 0, 0, 0.3);
-  padding: 5px 15px;
+  padding: 0.8rem 1.5rem;
   border-radius: 10px;
 }
 
 .breakdown-icon {
-  height: 50px;
+  height: 60px;
   width: auto;
 }
 
 .breakdown-counter {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: bold;
-  color: #ffffff; /* رنگ عدد شمارنده سفید */
+  color: #ffffff;
 }
 
 .gam-jeom {
@@ -120,15 +118,10 @@
 
 .label {
   font-size: 2rem;
-  text-transform: uppercase;
-  color: #fff;
 }
-
 .score-text {
   font-size: 6rem;
-  color: #ffffff;
 }
-
 .timer {
   width: 100%;
   font-size: 7rem;
@@ -136,11 +129,7 @@
   color: #000;
   padding: 20px 0;
   text-align: center;
-  text-shadow: none;
 }
-
 .round-number {
   font-size: 4rem;
-  color: #fff;
-  text-shadow: none;
 }

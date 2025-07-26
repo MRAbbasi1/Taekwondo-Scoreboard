@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "../styles/display.css";
-
 import headIcon from "../assets/picture/head +3.png";
 import bodyIcon from "../assets/picture/body +2.png";
 import punchIcon from "../assets/picture/punch +1.png";
@@ -13,23 +12,39 @@ const pointTypes = {
   punch: { icon: punchIcon },
   technicalHead: { icon: techHeadIcon },
   technicalBody: { icon: techBodyIcon },
+  bodyKick: { icon: bodyIcon },
 };
 
 const PointsBreakdownDisplay = ({ breakdown }) => {
-  const order = ["technicalHead", "technicalBody", "head", "body", "punch"];
+  const order = [
+    "technicalHead",
+    "technicalBody",
+    "head",
+    "body",
+    "punch",
+    "bodyKick",
+  ];
   return (
     <div className="points-breakdown">
       {order.map((key) => {
         const count = breakdown[key];
-        if (count > 0) {
+        const pointInfo = pointTypes[key];
+        if (count > 0 && pointInfo) {
           return (
             <div key={key} className="breakdown-item">
               <img
-                src={pointTypes[key].icon}
+                src={pointInfo.icon}
                 alt={key}
                 className="breakdown-icon"
+                style={
+                  key === "bodyKick"
+                    ? { filter: "hue-rotate(180deg) saturate(5)" }
+                    : {}
+                }
               />
-              <span className="breakdown-counter">x{count}</span>
+              <span className="breakdown-counter">
+                {key === "bodyKick" ? `-${count * 2}` : `x${count}`}
+              </span>
             </div>
           );
         }
@@ -56,24 +71,25 @@ const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
 
 const DisplayPage = () => {
   const [matchState, setMatchState] = useState(() => {
-    const savedState = localStorage.getItem("matchState");
-    return savedState ? JSON.parse(savedState) : null;
+    try {
+      const savedState = localStorage.getItem("matchState");
+      return savedState ? JSON.parse(savedState) : null;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
     const channel = new BroadcastChannel("taekwondo_scoreboard");
-
     channel.onmessage = (event) => {
       setMatchState(event.data);
     };
-
     const handleStorageChange = (e) => {
       if (e.key === "matchState") {
         setMatchState(JSON.parse(e.newValue));
       }
     };
     window.addEventListener("storage", handleStorageChange);
-
     return () => {
       channel.close();
       window.removeEventListener("storage", handleStorageChange);
@@ -91,10 +107,12 @@ const DisplayPage = () => {
       <div className="score-board">
         <div className="player-section blue">
           <div className="score-and-breakdown">
-            <p className="score">{matchState.blue.score}</p>
-            <PointsBreakdownDisplay
-              breakdown={matchState.blue.pointsBreakdown}
-            />
+            <div className="score-with-icons-wrapper">
+              <p className="score">{matchState.blue.score}</p>
+              <PointsBreakdownDisplay
+                breakdown={matchState.blue.pointsBreakdown}
+              />
+            </div>
           </div>
           <p className="gam-jeom">GAM-JEOM: {matchState.blue.gamJeom}</p>
         </div>
@@ -120,10 +138,12 @@ const DisplayPage = () => {
 
         <div className="player-section red">
           <div className="score-and-breakdown">
-            <p className="score">{matchState.red.score}</p>
-            <PointsBreakdownDisplay
-              breakdown={matchState.red.pointsBreakdown}
-            />
+            <div className="score-with-icons-wrapper">
+              <p className="score">{matchState.red.score}</p>
+              <PointsBreakdownDisplay
+                breakdown={matchState.red.pointsBreakdown}
+              />
+            </div>
           </div>
           <p className="gam-jeom">GAM-JEOM: {matchState.red.gamJeom}</p>
         </div>

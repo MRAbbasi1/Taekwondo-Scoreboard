@@ -32,7 +32,18 @@ const PointsBreakdownDisplay = ({ breakdown }) => {
         const count = breakdown[key];
         if (count > 0) {
           return (
-            <div key={key} className="breakdown-item">
+            <div
+              key={key}
+              className="breakdown-item"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "rgba(0,0,0,0.4)",
+                padding: "4px 8px",
+                borderRadius: "6px",
+              }}
+            >
               <img
                 src={pointTypes[key].icon}
                 alt={key}
@@ -41,7 +52,11 @@ const PointsBreakdownDisplay = ({ breakdown }) => {
               />
               <span
                 className="breakdown-counter"
-                style={{ fontSize: "1.5rem" }}
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  color: "#fff",
+                }}
               >
                 x{count}
               </span>
@@ -70,17 +85,23 @@ const DisplayPreview = ({ matchState }) => {
 
   if (!matchState) {
     return (
-      <div className="display-container">Waiting for operator signal...</div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+          color: "white",
+        }}
+      >
+        Waiting for operator signal...
+      </div>
     );
   }
   return (
-    <div className="display-container" style={{ fontFamily: "Arial" }}>
-      <div
-        className="score-board"
-        style={{ display: "flex", width: "100%", height: "100%" }}
-      >
+    <div style={{ fontFamily: "Arial, sans-serif", height: "100%" }}>
+      <div style={{ display: "flex", width: "100%", height: "100%" }}>
         <div
-          className="player-section blue"
           style={{
             flex: 2,
             display: "flex",
@@ -92,9 +113,8 @@ const DisplayPreview = ({ matchState }) => {
           }}
         >
           <p
-            className="score"
             style={{
-              fontSize: "12rem",
+              fontSize: "clamp(4rem, 20vw, 12rem)",
               color: "white",
               margin: 0,
               lineHeight: 1,
@@ -103,15 +123,11 @@ const DisplayPreview = ({ matchState }) => {
             {matchState.blue.score}
           </p>
           <PointsBreakdownDisplay breakdown={matchState.blue.pointsBreakdown} />
-          <p
-            className="gam-jeom"
-            style={{ fontSize: "1.5rem", color: "white" }}
-          >
+          <p style={{ fontSize: "1.5rem", color: "white" }}>
             GAM-JEOM: {matchState.blue.gamJeom}
           </p>
         </div>
         <div
-          className="center-section"
           style={{
             flex: 1,
             display: "flex",
@@ -119,22 +135,23 @@ const DisplayPreview = ({ matchState }) => {
             justifyContent: "space-around",
             alignItems: "center",
             background: "#000",
+            color: "white",
+            textAlign: "center",
           }}
         >
-          <div className="match-score">
-            <span className="label">MATCH</span>
-            <span className="score-text">
+          <div>
+            <span style={{ fontSize: "1.2rem" }}>MATCH</span>
+            <span style={{ display: "block", fontSize: "3rem" }}>
               {matchState.blue.roundWins} - {matchState.red.roundWins}
             </span>
           </div>
           <div
-            className="timer"
             style={{
               width: "100%",
-              fontSize: "4rem",
+              fontSize: "clamp(2rem, 10vw, 4rem)",
               background: "yellow",
               color: "black",
-              textAlign: "center",
+              padding: "10px 0",
             }}
           >
             <FormattedTimer
@@ -142,13 +159,14 @@ const DisplayPreview = ({ matchState }) => {
               isRestPeriod={matchState.isRestPeriod}
             />
           </div>
-          <div className="round-info">
-            <span className="label">ROUND</span>
-            <span className="round-number">{matchState.round}</span>
+          <div>
+            <span style={{ fontSize: "1.2rem" }}>ROUND</span>
+            <span style={{ display: "block", fontSize: "2.5rem" }}>
+              {matchState.round}
+            </span>
           </div>
         </div>
         <div
-          className="player-section red"
           style={{
             flex: 2,
             display: "flex",
@@ -160,9 +178,8 @@ const DisplayPreview = ({ matchState }) => {
           }}
         >
           <p
-            className="score"
             style={{
-              fontSize: "12rem",
+              fontSize: "clamp(4rem, 20vw, 12rem)",
               color: "white",
               margin: 0,
               lineHeight: 1,
@@ -171,10 +188,7 @@ const DisplayPreview = ({ matchState }) => {
             {matchState.red.score}
           </p>
           <PointsBreakdownDisplay breakdown={matchState.red.pointsBreakdown} />
-          <p
-            className="gam-jeom"
-            style={{ fontSize: "1.5rem", color: "white" }}
-          >
+          <p style={{ fontSize: "1.5rem", color: "white" }}>
             GAM-JEOM: {matchState.red.gamJeom}
           </p>
         </div>
@@ -196,30 +210,8 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
     onSave((parseInt(minutes, 10) || 0) * 60 + (parseInt(seconds, 10) || 0));
   };
   return (
-    <div
-      className="timer-editor-overlay"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.75)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 50,
-      }}
-    >
-      <div
-        className="timer-editor"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "20px",
-          background: "#3e4850",
-          padding: "30px 40px",
-          borderRadius: "16px",
-        }}
-      >
+    <div className="timer-editor-overlay">
+      <div className="timer-editor">
         <h4>{title}</h4>
         <div className="timer-inputs">
           <input
@@ -327,25 +319,25 @@ const CentralPointSelection = ({
     <div className="central-point-selection">
       <div className="base-point-selectors">
         <button
-          className={selectedBase === "head" ? "selected" : ""}
-          onClick={() => handleBaseSelect("head")}
+          className={selectedBase === "punch" ? "selected" : ""}
+          onClick={() => handleBaseSelect("punch")}
           disabled={disabled}
         >
-          Head (+3)
+          1
         </button>
         <button
           className={selectedBase === "body" ? "selected" : ""}
           onClick={() => handleBaseSelect("body")}
           disabled={disabled}
         >
-          Body (+2)
+          2
         </button>
         <button
-          className={selectedBase === "punch" ? "selected" : ""}
-          onClick={() => handleBaseSelect("punch")}
+          className={selectedBase === "head" ? "selected" : ""}
+          onClick={() => handleBaseSelect("head")}
           disabled={disabled}
         >
-          Punch (+1)
+          3
         </button>
       </div>
       <div className="sub-point-selectors">
@@ -408,30 +400,47 @@ const OperatorPage = () => {
   const handleScoreAction = (player, operation) => {
     if (!selectedBase) {
       setNotification(
-        "ابتدا یک امتیاز پایه (مثلاً Body +2) را انتخاب کنید.",
+        "ابتدا یک امتیاز پایه (1, 2, 3) را انتخاب کنید.",
         "error"
       );
       return;
     }
 
+    let actionTaken = false;
+
     if (selectedSub) {
       switch (selectedSub) {
         case "headTechnical":
-          if (operation === "add") applyTechnicalBonus(player, "head");
-          else setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          if (operation === "add") {
+            applyTechnicalBonus(player, "head");
+            actionTaken = true;
+          } else {
+            setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          }
           break;
         case "bodyTechnical":
-          if (operation === "add") applyTechnicalBonus(player, "body");
-          else setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          if (operation === "add") {
+            applyTechnicalBonus(player, "body");
+            actionTaken = true;
+          } else {
+            setNotification("این عمل برای کسر امتیاز معتبر نیست.", "error");
+          }
           break;
         case "bodyKick":
           handleBodyKick(player, operation);
+          actionTaken = true;
           break;
         default:
           break;
       }
     } else {
       handlePointAction(player, selectedBase, operation);
+      actionTaken = true;
+    }
+
+    if (actionTaken) {
+      setSelectedBase(null);
+      setSelectedSub(null);
     }
   };
 
@@ -602,7 +611,18 @@ const OperatorPage = () => {
         />
       )}
       {matchState.winner && (
-        <h1 className="final-winner-text">WINNER: {matchState.winner}</h1>
+        <h1
+          className="final-winner-text"
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 100,
+          }}
+        >
+          WINNER: {matchState.winner}
+        </h1>
       )}
       <div
         className={`notification ${matchState.notification.type} ${
