@@ -210,6 +210,13 @@ export const MatchProvider = ({ children }) => {
 
   const updateMatchInfo = useCallback(
     (data) => {
+      const isInfoComplete =
+        data.matchName?.trim() &&
+        data.bluePlayerName?.trim() &&
+        data.redPlayerName?.trim() &&
+        data.blueCountry?.value &&
+        data.redCountry?.value;
+
       _setMatchState((prev) => ({
         ...prev,
         matchName: data.matchName,
@@ -217,9 +224,15 @@ export const MatchProvider = ({ children }) => {
         redPlayerName: data.redPlayerName,
         blueCountry: data.blueCountry,
         redCountry: data.redCountry,
-        isMatchInfoSet: true,
+
+        isMatchInfoSet: isInfoComplete,
       }));
-      setNotification("Match information has been updated.", "success");
+
+      if (isInfoComplete) {
+        setNotification("Match information has been updated.", "success");
+      } else {
+        setNotification("Please fill all match info fields.", "error");
+      }
     },
     [setNotification]
   );

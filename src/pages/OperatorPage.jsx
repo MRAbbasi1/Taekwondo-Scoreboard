@@ -417,7 +417,7 @@ const OperatorPage = () => {
             <button
               className="btn-edit-time"
               onClick={handleEditTimeClick}
-              disabled={isFinished}
+              disabled={isFinished || !matchState.isMatchInfoSet}
             >
               Edit Time
             </button>
@@ -440,14 +440,14 @@ const OperatorPage = () => {
               <button
                 className="btn-end-round"
                 onClick={endRoundAndAwardWinner}
-                disabled={isFinished || isResting || matchState.isTimerRunning}
+                disabled={isFinished || isResting || matchState.isTimerRunning || !matchState.isMatchInfoSet}
               >
                 End Round
               </button>
               <button
                 className="btn-rest"
                 onClick={startRest}
-                disabled={isFinished || matchState.isTimerRunning}
+                disabled={isFinished || matchState.isTimerRunning || !matchState.isMatchInfoSet}
               >
                 Manual Rest
               </button>
@@ -477,7 +477,7 @@ const OperatorPage = () => {
               <button
                 className="btn-undo"
                 onClick={undoLastAction}
-                disabled={isResting}
+                disabled={isResting || !matchState.isMatchInfoSet}
               >
                 Undo
               </button>
@@ -491,7 +491,7 @@ const OperatorPage = () => {
                   matchState.videoCheck === "blue" ? "active" : ""
                 }`}
                 onClick={() => handleVideoCheck("blue")}
-                disabled={isControlDisabled}
+                disabled={isControlDisabled || !matchState.isMatchInfoSet}
               >
                 Video Check BLUE
               </button>
@@ -500,7 +500,7 @@ const OperatorPage = () => {
                   matchState.videoCheck === "red" ? "active" : ""
                 }`}
                 onClick={() => handleVideoCheck("red")}
-                disabled={isControlDisabled}
+                disabled={isControlDisabled || !matchState.isMatchInfoSet}
               >
                 Video Check RED
               </button>
@@ -510,7 +510,7 @@ const OperatorPage = () => {
                 <div className="round-win-editor">
                   <button
                     onClick={() => changeRoundWins("blue", -1)}
-                    disabled={isFinished}
+                    disabled={isFinished || !matchState.isMatchInfoSet}
                   >
                     -
                   </button>
@@ -520,7 +520,7 @@ const OperatorPage = () => {
                   </div>
                   <button
                     onClick={() => changeRoundWins("blue", 1)}
-                    disabled={isFinished}
+                    disabled={isFinished || !matchState.isMatchInfoSet}
                   >
                     +
                   </button>
@@ -528,7 +528,7 @@ const OperatorPage = () => {
                 <div className="round-win-editor">
                   <button
                     onClick={() => changeRoundWins("red", -1)}
-                    disabled={isFinished}
+                    disabled={isFinished || !matchState.isMatchInfoSet}
                   >
                     -
                   </button>
@@ -538,7 +538,7 @@ const OperatorPage = () => {
                   </div>
                   <button
                     onClick={() => changeRoundWins("red", 1)}
-                    disabled={isFinished}
+                    disabled={isFinished || !matchState.isMatchInfoSet}
                   >
                     +
                   </button>
@@ -553,20 +553,20 @@ const OperatorPage = () => {
             player="blue"
             onScoreAction={handleScoreAction}
             onGamJeomAction={handleGamJeom}
-            disabled={isControlDisabled && !matchState.videoCheck}
+            disabled={isControlDisabled && !matchState.videoCheck || !matchState.isMatchInfoSet}
           />
           <CentralPointSelection
             selectedBase={selectedBase}
             setSelectedBase={setSelectedBase}
             selectedSub={selectedSub}
             setSelectedSub={setSelectedSub}
-            disabled={isControlDisabled && !matchState.videoCheck}
+            disabled={isControlDisabled && !matchState.videoCheck || !matchState.isMatchInfoSet}
           />
           <PlayerActionControls
             player="red"
             onScoreAction={handleScoreAction}
             onGamJeomAction={handleGamJeom}
-            disabled={isControlDisabled && !matchState.videoCheck}
+            disabled={isControlDisabled && !matchState.videoCheck || !matchState.isMatchInfoSet}
           />
         </footer>
       </div>
