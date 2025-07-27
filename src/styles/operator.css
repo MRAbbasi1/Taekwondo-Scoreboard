@@ -155,7 +155,8 @@ button:active:not(:disabled) {
 .btn-reset-match {
   background-color: var(--primary-red);
 }
-.btn-open-display {
+.btn-open-display,
+.btn-match-info {
   background-color: #6c757d;
 }
 .match-meta-controls {
@@ -342,7 +343,8 @@ button:active:not(:disabled) {
   background-color: var(--primary-red);
 }
 
-.timer-editor-overlay {
+.timer-editor-overlay,
+.modal-overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.75);
@@ -351,7 +353,8 @@ button:active:not(:disabled) {
   align-items: center;
   z-index: 50;
 }
-.timer-editor {
+.timer-editor,
+.modal-content {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -359,6 +362,65 @@ button:active:not(:disabled) {
   background: #3e4850;
   padding: 30px 40px;
   border-radius: 16px;
+  color: var(--text-color);
+}
+
+.modal-content {
+  width: 500px;
+}
+
+.modal-content h4 {
+  margin-top: 0;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #5a646c;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.modal-buttons .btn-save {
+  background-color: var(--success-green);
+  color: white;
+}
+.modal-buttons .btn-cancel {
+  background-color: #6c757d;
+  color: white;
 }
 
 .final-winner-text {
@@ -393,6 +455,7 @@ button:active:not(:disabled) {
   justify-content: center;
   gap: 1rem;
   width: 100%;
+  margin-top: 10px;
 }
 
 .video-check-btn {

@@ -1,236 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
-import headIcon from "../assets/picture/head +3.png";
-import bodyIcon from "../assets/picture/body +2.png";
-import punchIcon from "../assets/picture/punch +1.png";
-import techHeadIcon from "../assets/picture/head technical+2.png";
-import techBodyIcon from "../assets/picture/body technical +2.png";
-import videoCheckIcon from "../assets/picture/video-check.svg";
+import DisplayPage from "./DisplayPage"; // Import the new DisplayPage for preview
 
-const pointTypes = {
-  head: { value: 3, icon: headIcon },
-  body: { value: 2, icon: bodyIcon },
-  punch: { value: 1, icon: punchIcon },
-  technicalHead: { value: 5, icon: techHeadIcon },
-  technicalBody: { value: 4, icon: techBodyIcon },
-};
-
-const PointsBreakdownDisplay = ({ breakdown }) => {
-  const order = ["technicalHead", "technicalBody", "head", "body", "punch"];
-  return (
-    <div
-      className="points-breakdown"
-      style={{
-        flexDirection: "row",
-        position: "static",
-        gap: "10px",
-        marginTop: "-20px",
-        marginBottom: "20px",
-      }}
-    >
-      {order.map((key) => {
-        const count = breakdown[key];
-        if (count > 0) {
-          return (
-            <div
-              key={key}
-              className="breakdown-item"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "rgba(0,0,0,0.4)",
-                padding: "4px 8px",
-                borderRadius: "6px",
-              }}
-            >
-              <img
-                src={pointTypes[key].icon}
-                alt={key}
-                className="breakdown-icon"
-                style={{ height: "30px", width: "30px" }}
-              />
-              <span
-                className="breakdown-counter"
-                style={{
-                  fontSize: "1.5rem",
-                  fontWeight: "bold",
-                  color: "#fff",
-                }}
-              >
-                x{count}
-              </span>
-            </div>
-          );
-        }
-        return null;
-      })}
-    </div>
-  );
-};
-
-const DisplayPreview = ({ matchState }) => {
-  const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
-      const ms = Math.floor((milliseconds % 1000) / 10)
-        .toString()
-        .padStart(2, "0");
-      return `${minutes}:${secs.toString().padStart(2, "0")}:${ms}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  if (!matchState) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-          color: "white",
-        }}
-      >
-        Waiting for operator signal...
-      </div>
-    );
-  }
-  return (
-    <div style={{ fontFamily: "Arial, sans-serif", height: "100%" }}>
-      <div style={{ display: "flex", width: "100%", height: "100%" }}>
-        <div
-          style={{
-            flex: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "10px",
-            background: "linear-gradient(to bottom, #0000ff, #00003a)",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "clamp(4rem, 20vw, 12rem)",
-              color: "white",
-              margin: 0,
-              lineHeight: 1,
-            }}
-          >
-            {matchState.blue.score}
-          </p>
-          <PointsBreakdownDisplay breakdown={matchState.blue.pointsBreakdown} />
-          {matchState.videoCheck === "blue" && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "15px",
-                marginBottom: "10px",
-              }}
-            >
-              <img
-                src={videoCheckIcon}
-                alt="Video Check"
-                style={{ height: "40px" }}
-              />
-              <div className="blinking-light"></div>
-            </div>
-          )}
-          <p style={{ fontSize: "1.5rem", color: "white" }}>
-            GAM-JEOM: {matchState.blue.gamJeom}
-          </p>
-        </div>
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-around",
-            alignItems: "center",
-            background: "#000",
-            color: "white",
-            textAlign: "center",
-          }}
-        >
-          <div>
-            <span style={{ fontSize: "1.2rem" }}>MATCH</span>
-            <span style={{ display: "block", fontSize: "3rem" }}>
-              {matchState.blue.roundWins} - {matchState.red.roundWins}
-            </span>
-          </div>
-          <div
-            style={{
-              width: "100%",
-              fontSize: "clamp(2rem, 10vw, 4rem)",
-              background: "yellow",
-              color: "black",
-              padding: "10px 0",
-            }}
-          >
-            <FormattedTimer
-              milliseconds={matchState.timer}
-              isRestPeriod={matchState.isRestPeriod}
-            />
-          </div>
-          <div>
-            <span style={{ fontSize: "1.2rem" }}>ROUND</span>
-            <span style={{ display: "block", fontSize: "2.5rem" }}>
-              {matchState.round}
-            </span>
-          </div>
-        </div>
-        <div
-          style={{
-            flex: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "10px",
-            background: "linear-gradient(to bottom, #ff0000, #470000)",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "clamp(4rem, 20vw, 12rem)",
-              color: "white",
-              margin: 0,
-              lineHeight: 1,
-            }}
-          >
-            {matchState.red.score}
-          </p>
-          <PointsBreakdownDisplay breakdown={matchState.red.pointsBreakdown} />
-          {matchState.videoCheck === "red" && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "15px",
-                marginBottom: "10px",
-              }}
-            >
-              <img
-                src={videoCheckIcon}
-                alt="Video Check"
-                style={{ height: "40px" }}
-              />
-              <div className="blinking-light"></div>
-            </div>
-          )}
-          <p style={{ fontSize: "1.5rem", color: "white" }}>
-            GAM-JEOM: {matchState.red.gamJeom}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+// This is a placeholder for your country data.
+// In a real app, you might fetch this or have it in a separate file.
+const countries = [
+  { name: "Select Country", code: "N/A", flag: "" },
+  { name: "Iran", code: "IR", flag: "iran.png" },
+  { name: "Germany", code: "GER", flag: "germany.png" },
+  { name: "USA", code: "USA", flag: "usa.png" },
+  { name: "South Korea", code: "KOR", flag: "korea.png" },
+  { name: "China", code: "CHN", flag: "china.png" },
+  { name: "Russia", code: "RUS", flag: "russia.png" },
+];
 
 const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
   const [minutes, setMinutes] = useState(
@@ -267,9 +50,108 @@ const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
             style={{ width: "120px", fontSize: "5rem", textAlign: "center" }}
           />
         </div>
-        <div className="timer-editor-buttons">
-          <button onClick={handleSave}>Save</button>
-          <button onClick={onCancel}>Cancel</button>
+        <div className="modal-buttons">
+          <button onClick={onCancel} className="btn-cancel">
+            Cancel
+          </button>
+          <button onClick={handleSave} className="btn-save">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MatchInfoModal = ({ onSave, onCancel, currentInfo }) => {
+  const [matchData, setMatchData] = useState({
+    matchName: currentInfo.matchName,
+    bluePlayerName: currentInfo.bluePlayerName,
+    redPlayerName: currentInfo.redPlayerName,
+    blueCountry: currentInfo.blueCountry,
+    redCountry: currentInfo.redCountry,
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setMatchData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCountryChange = (player, countryCode) => {
+    const country = countries.find((c) => c.code === countryCode);
+    setMatchData((prev) => ({ ...prev, [`${player}Country`]: country }));
+  };
+
+  const handleSave = () => {
+    onSave(matchData);
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h4>Match Information</h4>
+        <div className="modal-form">
+          <div className="form-group">
+            <label>Match Name</label>
+            <input
+              type="text"
+              name="matchName"
+              value={matchData.matchName}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Blue Player Name</label>
+            <input
+              type="text"
+              name="bluePlayerName"
+              value={matchData.bluePlayerName}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Blue Player Country</label>
+            <select
+              value={matchData.blueCountry.code}
+              onChange={(e) => handleCountryChange("blue", e.target.value)}
+            >
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Red Player Name</label>
+            <input
+              type="text"
+              name="redPlayerName"
+              value={matchData.redPlayerName}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Red Player Country</label>
+            <select
+              value={matchData.redCountry.code}
+              onChange={(e) => handleCountryChange("red", e.target.value)}
+            >
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="modal-buttons">
+          <button onClick={onCancel} className="btn-cancel">
+            Cancel
+          </button>
+          <button onClick={handleSave} className="btn-save">
+            Save
+          </button>
         </div>
       </div>
     </div>
@@ -331,8 +213,6 @@ const CentralPointSelection = ({
   selectedSub,
   setSelectedSub,
   disabled,
-  onVideoCheck,
-  videoCheckPlayer,
 }) => {
   const handleBaseSelect = (base) => {
     if (selectedBase === base) {
@@ -378,21 +258,21 @@ const CentralPointSelection = ({
         </button>
       </div>
       <div className="sub-point-selectors">
-        {selectedBase === "body" && (
+        {(selectedBase === "body" || selectedBase === "head") && (
           <>
-            <button
-              className={selectedSub === "headTechnical" ? "selected" : ""}
-              onClick={() => handleSubSelect("headTechnical")}
-              disabled={disabled}
-            >
-              Head Technical
-            </button>
             <button
               className={selectedSub === "bodyTechnical" ? "selected" : ""}
               onClick={() => handleSubSelect("bodyTechnical")}
               disabled={disabled}
             >
               Body Technical
+            </button>
+            <button
+              className={selectedSub === "headTechnical" ? "selected" : ""}
+              onClick={() => handleSubSelect("headTechnical")}
+              disabled={disabled}
+            >
+              Head Technical
             </button>
             <button
               className={selectedSub === "bodyKick" ? "selected" : ""}
@@ -403,26 +283,6 @@ const CentralPointSelection = ({
             </button>
           </>
         )}
-      </div>
-      <div className="video-check-controls">
-        <button
-          className={`video-check-btn blue ${
-            videoCheckPlayer === "blue" ? "active" : ""
-          }`}
-          onClick={() => onVideoCheck("blue")}
-          disabled={disabled}
-        >
-          Video Check BLUE
-        </button>
-        <button
-          className={`video-check-btn red ${
-            videoCheckPlayer === "red" ? "active" : ""
-          }`}
-          onClick={() => onVideoCheck("red")}
-          disabled={disabled}
-        >
-          Video Check RED
-        </button>
       </div>
     </div>
   );
@@ -445,9 +305,11 @@ const OperatorPage = () => {
     startRest,
     skipRest,
     handleVideoCheck,
+    updateMatchInfo,
   } = useMatch();
 
   const [isEditingTime, setIsEditingTime] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedBase, setSelectedBase] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
 
@@ -523,7 +385,7 @@ const OperatorPage = () => {
     <>
       <div className="operator-layout-container">
         <main className="preview-panel">
-          <DisplayPreview matchState={matchState} />
+          <DisplayPage externalMatchState={matchState} />
         </main>
 
         <aside className={`sidebar-panel ${isResting ? "resting" : ""}`}>
@@ -545,7 +407,7 @@ const OperatorPage = () => {
                   matchState.isTimerRunning ? "running" : "stopped"
                 }`}
                 onClick={toggleTimer}
-                disabled={isFinished}
+                disabled={isFinished || !matchState.isMatchInfoSet}
               >
                 {isResting
                   ? matchState.isTimerRunning
@@ -587,6 +449,12 @@ const OperatorPage = () => {
                 Open Display
               </button>
               <button
+                className="btn-match-info"
+                onClick={() => setIsInfoModalOpen(true)}
+              >
+                Match Info
+              </button>
+              <button
                 className="btn-undo"
                 onClick={undoLastAction}
                 disabled={isResting}
@@ -595,6 +463,26 @@ const OperatorPage = () => {
               </button>
               <button className="btn-reset-match" onClick={resetMatch}>
                 Reset Match
+              </button>
+            </div>
+            <div className="video-check-controls">
+              <button
+                className={`video-check-btn blue ${
+                  matchState.videoCheck === "blue" ? "active" : ""
+                }`}
+                onClick={() => handleVideoCheck("blue")}
+                disabled={isControlDisabled}
+              >
+                Video Check BLUE
+              </button>
+              <button
+                className={`video-check-btn red ${
+                  matchState.videoCheck === "red" ? "active" : ""
+                }`}
+                onClick={() => handleVideoCheck("red")}
+                disabled={isControlDisabled}
+              >
+                Video Check RED
               </button>
             </div>
             <div className="match-meta-controls">
@@ -653,8 +541,6 @@ const OperatorPage = () => {
             selectedSub={selectedSub}
             setSelectedSub={setSelectedSub}
             disabled={isControlDisabled && !matchState.videoCheck}
-            onVideoCheck={handleVideoCheck}
-            videoCheckPlayer={matchState.videoCheck}
           />
           <PlayerActionControls
             player="red"
@@ -674,6 +560,17 @@ const OperatorPage = () => {
           }}
           onCancel={() => setIsEditingTime(false)}
           title={isResting ? "Edit Rest Time" : "Edit Match Time"}
+        />
+      )}
+
+      {isInfoModalOpen && (
+        <MatchInfoModal
+          currentInfo={matchState}
+          onSave={(data) => {
+            updateMatchInfo(data);
+            setIsInfoModalOpen(false);
+          }}
+          onCancel={() => setIsInfoModalOpen(false)}
         />
       )}
 

@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 
+// Assuming audio files are in the correct path
 import startSoundSrc from "../assets/audio/B1.wav";
 import scoreSoundSrc from "../assets/audio/B2.wav";
 import tenSecondSoundSrc from "../assets/audio/B1.wav";
@@ -68,12 +69,21 @@ export const MatchProvider = ({ children }) => {
     timer: 120000,
     isTimerRunning: false,
     isRestPeriod: false,
-    videoCheck: null, // New state: null, 'blue', or 'red'
+    videoCheck: null,
     blue: { ...initialPlayerState, name: "BLUE" },
     red: { ...initialPlayerState, name: "RED" },
     status: "PRE_MATCH",
     winner: null,
     notification: { message: "", type: "info", visible: false },
+    // New state for match info
+    matchName: "e.g: Match Name - 65kg",
+    bluePlayerName: "BLUE PLAYER",
+    redPlayerName: "RED PLAYER",
+    blueCountry: { name: "Country", code: "N/A", flag: "" },
+    redCountry: { name: "Country", code: "N/A", flag: "" },
+    totalHeadHits: 0,
+    totalBodyHits: 0,
+    isMatchInfoSet: false,
   };
 
   const [matchState, _setMatchState] = useState(() => {
@@ -150,7 +160,7 @@ export const MatchProvider = ({ children }) => {
         status: newStatus,
         winner: finalWinner,
         isRestPeriod: isNowResting,
-        videoCheck: null, // Reset video check at end of round
+        videoCheck: null,
         blue: { ...initialPlayerState, name: "BLUE", roundWins: newBlueWins },
         red: { ...initialPlayerState, name: "RED", roundWins: newRedWins },
       };
@@ -196,6 +206,22 @@ export const MatchProvider = ({ children }) => {
       return finalState;
     });
   };
+
+  const updateMatchInfo = useCallback(
+    (data) => {
+      _setMatchState((prev) => ({
+        ...prev,
+        matchName: data.matchName,
+        bluePlayerName: data.bluePlayerName,
+        redPlayerName: data.redPlayerName,
+        blueCountry: data.blueCountry,
+        redCountry: data.redCountry,
+        isMatchInfoSet: true,
+      }));
+      setNotification("Match information has been updated.", "success");
+    },
+    [setNotification]
+  );
 
   const endRoundAndAwardWinner = useCallback(() => {
     setMatchState((prev) => {
@@ -283,19 +309,32 @@ export const MatchProvider = ({ children }) => {
         playSound(scoreSound);
         setMatchState((prev) => {
           const currentBreakdown = { ...prev[player].pointsBreakdown };
+          let newTotalHeadHits = prev.totalHeadHits;
+          let newTotalBodyHits = prev.totalBodyHits;
+
           if (operation === "add") {
             currentBreakdown[pointType]++;
+            if (pointType === "head" || pointType === "technicalHead")
+              newTotalHeadHits++;
+            if (pointType === "body" || pointType === "technicalBody")
+              newTotalBodyHits++;
           } else if (
             operation === "remove" &&
             currentBreakdown[pointType] > 0
           ) {
             currentBreakdown[pointType]--;
+            if (pointType === "head" || pointType === "technicalHead")
+              newTotalHeadHits--;
+            if (pointType === "body" || pointType === "technicalBody")
+              newTotalBodyHits--;
           } else {
             setNotification(`No ${pointType} points to remove.`, "error");
             return prev;
           }
           return {
             ...prev,
+            totalHeadHits: newTotalHeadHits,
+            totalBodyHits: newTotalBodyHits,
             [player]: {
               ...prev[player],
               pointsBreakdown: currentBreakdown,
@@ -354,13 +393,22 @@ export const MatchProvider = ({ children }) => {
           const technicalPointType =
             bonusType === "head" ? "technicalHead" : "technicalBody";
           const currentBreakdown = { ...prev[player].pointsBreakdown };
+          let newTotalHeadHits = prev.totalHeadHits;
+          let newTotalBodyHits = prev.totalBodyHits;
+
           if (currentBreakdown[basePointType] > 0) {
             playSound(scoreSound);
             currentBreakdown[basePointType]--;
             currentBreakdown[technicalPointType]++;
+
+            if (bonusType === "head") newTotalHeadHits++;
+            if (bonusType === "body") newTotalBodyHits++;
+
             setNotification(`Technical ${bonusType} bonus applied!`, "success");
             return {
               ...prev,
+              totalHeadHits: newTotalHeadHits,
+              totalBodyHits: newTotalBodyHits,
               [player]: {
                 ...prev[player],
                 pointsBreakdown: currentBreakdown,
@@ -428,6 +476,13 @@ export const MatchProvider = ({ children }) => {
 
   const toggleTimer = useCallback(() => {
     guardedAction(() => {
+      if (!matchState.isMatchInfoSet) {
+        setNotification(
+          "Please set match information before starting.",
+          "error"
+        );
+        return;
+      }
       if (matchState.videoCheck) {
         setNotification("Cannot start timer during video check.", "error");
         return;
@@ -445,6 +500,7 @@ export const MatchProvider = ({ children }) => {
     matchState.status,
     matchState.timer,
     matchState.videoCheck,
+    matchState.isMatchInfoSet,
     setNotification,
   ]);
 
@@ -584,6 +640,7 @@ export const MatchProvider = ({ children }) => {
     startRest,
     skipRest,
     handleVideoCheck,
+    updateMatchInfo, // Export the new function
   };
 
   return (

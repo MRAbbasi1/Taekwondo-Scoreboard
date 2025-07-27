@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
 import "../styles/display.css";
+
+// Import images from the specified asset path
+import worldTaekwondoLogo from "../assets/picture/world-taekwondo-federation.png";
+import daedoLogo from "../assets/picture/DAEDO_logo.png";
+import headPointsBg from "../assets/picture/head-points.png";
+import bodyPointsBg from "../assets/picture/body-points.png";
+import videoCheckIcon from "../assets/picture/video-check.svg";
+
+// Point icons
 import headIcon from "../assets/picture/head +3.png";
 import bodyIcon from "../assets/picture/body +2.png";
 import punchIcon from "../assets/picture/punch +1.png";
 import techHeadIcon from "../assets/picture/head technical+2.png";
 import techBodyIcon from "../assets/picture/body technical +2.png";
-import videoCheckIcon from "../assets/picture/video-check.svg";
 
 const pointTypes = {
   head: { icon: headIcon },
@@ -13,44 +21,22 @@ const pointTypes = {
   punch: { icon: punchIcon },
   technicalHead: { icon: techHeadIcon },
   technicalBody: { icon: techBodyIcon },
-  bodyKick: { icon: bodyIcon },
 };
 
 const PointsBreakdownDisplay = ({ breakdown }) => {
-  const order = [
-    "technicalHead",
-    "technicalBody",
-    "head",
-    "body",
-    "punch",
-    "bodyKick",
-  ];
+  const order = ["technicalHead", "technicalBody", "head", "body", "punch"];
   return (
-    <div className="points-breakdown">
-      {order.map((key) => {
-        const count = breakdown[key];
-        const pointInfo = pointTypes[key];
-        if (count > 0 && pointInfo) {
-          return (
-            <div key={key} className="breakdown-item">
-              <img
-                src={pointInfo.icon}
-                alt={key}
-                className="breakdown-icon"
-                style={
-                  key === "bodyKick"
-                    ? { filter: "hue-rotate(180deg) saturate(5)" }
-                    : {}
-                }
-              />
-              <span className="breakdown-counter">
-                {key === "bodyKick" ? `-${count * 2}` : `x${count}`}
-              </span>
-            </div>
-          );
-        }
-        return null;
-      })}
+    <div className="points-icons-container">
+      {order.map((key) => (
+        <div key={key} className="points-icon-item">
+          <span className="points-icon-counter">x{breakdown[key] || 0}</span>
+          <img
+            src={pointTypes[key].icon}
+            alt={key}
+            className="points-icon-img"
+          />
+        </div>
+      ))}
     </div>
   );
 };
@@ -64,117 +50,165 @@ const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
     const ms = Math.floor((milliseconds % 1000) / 10)
       .toString()
       .padStart(2, "0");
-    return `${minutes}:${secs.toString().padStart(2, "0")}:${ms}`;
+    return `${minutes.toString().padStart(2, "0")} : ${secs
+      .toString()
+      .padStart(2, "0")} : ${ms}`;
   }
 
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  return `${minutes.toString().padStart(2, "0")} : ${secs
+    .toString()
+    .padStart(2, "0")}`;
 };
 
-const DisplayPage = () => {
-  const [matchState, setMatchState] = useState(() => {
-    try {
-      const savedState = localStorage.getItem("matchState");
-      return savedState ? JSON.parse(savedState) : null;
-    } catch {
-      return null;
-    }
-  });
+const DisplayPage = ({ externalMatchState }) => {
+  const [matchState, setMatchState] = useState(externalMatchState || null);
 
   useEffect(() => {
-    const channel = new BroadcastChannel("taekwondo_scoreboard");
-    channel.onmessage = (event) => {
-      setMatchState(event.data);
-    };
-    const handleStorageChange = (e) => {
-      if (e.key === "matchState") {
-        setMatchState(JSON.parse(e.newValue));
+    // If used as a standalone page, listen for broadcast updates
+    if (!externalMatchState) {
+      const channel = new BroadcastChannel("taekwondo_scoreboard");
+      channel.onmessage = (event) => {
+        setMatchState(event.data);
+      };
+
+      // Initial load from localStorage
+      try {
+        const savedState = localStorage.getItem("matchState");
+        if (savedState) setMatchState(JSON.parse(savedState));
+      } catch (e) {
+        console.error("Could not parse matchState from localStorage", e);
       }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      channel.close();
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+
+      return () => channel.close();
+    } else {
+      // If used as a component (preview), update with props
+      setMatchState(externalMatchState);
+    }
+  }, [externalMatchState]);
 
   if (!matchState) {
-    return (
-      <div className="display-container">Waiting for operator signal...</div>
-    );
+    return <div className="display-page">Waiting for operator signal...</div>;
   }
 
+  const { blue, red } = matchState;
+
   return (
-    <div className="display-container">
-      <div className="score-board">
-        <div className="player-section blue">
-          <div className="score-and-breakdown">
-            <div className="score-with-icons-wrapper">
-              <p className="score">{matchState.blue.score}</p>
-              <PointsBreakdownDisplay
-                breakdown={matchState.blue.pointsBreakdown}
+    <div className="display-page">
+      <header className="header">
+        <div className="header-logos">
+          <img src={worldTaekwondoLogo} alt="World Taekwondo Federation" />
+          <img src={daedoLogo} alt="Daedo International" />
+        </div>
+        <div className="match-name">{matchState.matchName}</div>
+        <div className="hit-counters">
+          <div className="hit-counter">
+            <img src={headPointsBg} alt="Head Hits" />
+            <div className="hit-counter-number">{matchState.totalHeadHits}</div>
+          </div>
+          <div className="hit-counter">
+            <img src={bodyPointsBg} alt="Body Hits" />
+            <div className="hit-counter-number">{matchState.totalBodyHits}</div>
+          </div>
+        </div>
+      </header>
+
+      <main className="body-container">
+        {/* Blue Player Section */}
+        <div className="player-body-background blue-body-background">
+          <div className="flags-and-names">
+            <div className="player-info-box">
+              <img
+                src={`src/assets/picture/${matchState.blueCountry.flag}`}
+                alt={matchState.blueCountry.name}
+                className="player-flag"
               />
+              <div className="player-name-country">
+                <span className="player-country-code">
+                  {matchState.blueCountry.code}
+                </span>
+                <span className="player-name">{matchState.bluePlayerName}</span>
+              </div>
             </div>
           </div>
-          {matchState.videoCheck === "blue" && (
-            <div className="video-check-indicator">
-              <img
-                src={videoCheckIcon}
-                alt="Video Check"
-                style={{ height: "50px" }}
-              />
-              <div
-                className="blinking-light"
-                style={{ width: "25px", height: "25px" }}
-              ></div>
+          <div className="main-content">
+            <PointsBreakdownDisplay breakdown={blue.pointsBreakdown} />
+            <div className="player-match-points">
+              <div className="player-point-background blue-point-background"></div>
+              <div className="player-game-point">{blue.score}</div>
+              <div className="player-video-check">
+                {matchState.videoCheck === "blue" && (
+                  <img src={videoCheckIcon} alt="Video Check Blue" />
+                )}
+              </div>
             </div>
-          )}
-          <p className="gam-jeom">GAM-JEOM: {matchState.blue.gamJeom}</p>
+          </div>
+          <div className="gam-jeom-container">
+            <div className="gam-jeom-number">
+              GAM-JEOM
+              <br />
+              {blue.gamJeom}
+            </div>
+          </div>
         </div>
 
-        <div className="center-section">
-          <div className="match-score">
-            <span className="label">MATCH</span>
-            <span className="score-text">
-              {matchState.blue.roundWins} - {matchState.red.roundWins}
-            </span>
+        {/* Center Column */}
+        <div className="center-column-display">
+          <div className="match-round-points">
+            MATCH
+            <br />
+            {blue.roundWins} - {red.roundWins}
           </div>
-          <div className="timer">
+          <div className="timer-background">
             <FormattedTimer
               milliseconds={matchState.timer}
               isRestPeriod={matchState.isRestPeriod}
             />
           </div>
-          <div className="round-info">
-            <span className="label">ROUND</span>
-            <span className="round-number">{matchState.round}</span>
+          <div className="round-number-display">
+            ROUND
+            <br />
+            {matchState.round}
           </div>
         </div>
 
-        <div className="player-section red">
-          <div className="score-and-breakdown">
-            <div className="score-with-icons-wrapper">
-              <p className="score">{matchState.red.score}</p>
-              <PointsBreakdownDisplay
-                breakdown={matchState.red.pointsBreakdown}
+        {/* Red Player Section */}
+        <div className="player-body-background red-body-background">
+          <div className="flags-and-names">
+            <div className="player-info-box">
+              <div className="player-name-country">
+                <span className="player-country-code">
+                  {matchState.redCountry.code}
+                </span>
+                <span className="player-name">{matchState.redPlayerName}</span>
+              </div>
+              <img
+                src={`src/assets/picture/${matchState.redCountry.flag}`}
+                alt={matchState.redCountry.name}
+                className="player-flag"
               />
             </div>
           </div>
-          {matchState.videoCheck === "red" && (
-            <div className="video-check-indicator">
-              <img
-                src={videoCheckIcon}
-                alt="Video Check"
-                style={{ height: "50px" }}
-              />
-              <div
-                className="blinking-light"
-                style={{ width: "25px", height: "25px" }}
-              ></div>
+          <div className="main-content">
+            <div className="player-match-points">
+              <div className="player-point-background red-point-background"></div>
+              <div className="player-game-point">{red.score}</div>
+              <div className="player-video-check">
+                {matchState.videoCheck === "red" && (
+                  <img src={videoCheckIcon} alt="Video Check Red" />
+                )}
+              </div>
             </div>
-          )}
-          <p className="gam-jeom">GAM-JEOM: {matchState.red.gamJeom}</p>
+            <PointsBreakdownDisplay breakdown={red.pointsBreakdown} />
+          </div>
+          <div className="gam-jeom-container">
+            <div className="gam-jeom-number">
+              GAM-JEOM
+              <br />
+              {red.gamJeom}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

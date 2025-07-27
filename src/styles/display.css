@@ -1,161 +1,270 @@
-.display-container {
+/* General Page Setup */
+.display-page {
   width: 100vw;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #000;
-  color: #fff;
-  font-family: "Arial", sans-serif;
-  font-weight: bold;
-  overflow: hidden;
-}
-
-.score-board {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  border: 2px solid #000;
-}
-
-.player-section {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
   position: relative;
+  background: white;
+  overflow: hidden;
+  font-family: "Arial", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: white;
 }
 
-.blue {
-  background: linear-gradient(to bottom, #0000ff, #00003a);
-}
-.red {
-  background: linear-gradient(to bottom, #ff0000, #470000);
-}
-
-.score-and-breakdown {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
+/* Header Section */
+.header {
   width: 100%;
-}
-
-.score-with-icons-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 4rem;
-}
-
-.score {
-  font-size: 25rem;
-  color: #fff;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-  margin: 0;
-  line-height: 1;
-}
-
-.points-breakdown {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 1.5rem;
-}
-
-.breakdown-item {
+  height: 10vh; /* 100px on a 1000px height screen */
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: black;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 0.8rem 1.5rem;
-  border-radius: 10px;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
-.breakdown-icon {
-  height: 60px;
+.header-logos {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 100%;
+}
+
+.header-logos img {
+  height: 65%;
   width: auto;
 }
 
-.breakdown-counter {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.gam-jeom {
-  font-size: 2.5rem;
-  color: #fff;
-  text-shadow: none;
-  padding-bottom: 10px;
-  width: 100%;
+.match-name {
+  font-size: clamp(1.5rem, 3.6vw, 36px);
   text-align: center;
-  flex-shrink: 0;
 }
 
-.center-section {
-  flex: 1;
+.hit-counters {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.hit-counter {
+  position: relative;
+  width: 90px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hit-counter img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.7;
+}
+
+.hit-counter-number {
+  position: relative;
+  font-size: clamp(1.8rem, 3.6vw, 36px);
+  z-index: 1;
+}
+
+/* Body Section */
+.body-container {
+  width: 100%;
+  height: 90vh; /* 900px on a 1000px height screen */
+  position: absolute;
+  top: 10vh;
+  left: 0;
+  display: flex;
+}
+
+.player-body-background {
+  width: 50%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.blue-body-background {
+  background: linear-gradient(180deg, #080075 0%, #03002d 100%);
+}
+
+.red-body-background {
+  background: linear-gradient(180deg, #750002 0%, #2d0001 100%);
+}
+
+/* Player Info (Flags and Names) */
+.flags-and-names {
+  width: 100%;
+  height: 15%; /* 150px on 900px */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1%;
+}
+
+.player-info-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.player-flag {
+  width: 125px;
+  height: 75px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.player-name-country {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-size: clamp(1.8rem, 3.6vw, 36px);
+}
+
+.player-country-code {
+  font-size: clamp(1.4rem, 2.8vw, 28px);
+}
+
+.red-body-background .player-info-box {
+  flex-direction: row-reverse;
+}
+.red-body-background .player-name-country {
+  text-align: right;
+}
+
+/* Main Content Area */
+.main-content {
+  width: 100%;
+  height: 70%; /* 600px on 900px */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1%;
+  padding: 0 2%;
+}
+
+.points-icons-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  width: 100px;
+}
+
+.points-icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.points-icon-counter {
+  font-size: 24px;
+  text-transform: lowercase;
+}
+
+.points-icon-img {
+  width: 45px;
+  height: 56px;
+}
+
+.player-match-points {
+  width: 400px;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-point-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+.blue-point-background {
+  background: #0022ff;
+}
+.red-point-background {
+  background: #ff0004;
+}
+
+.player-game-point {
+  font-size: clamp(15rem, 27.5vw, 275px);
+  line-height: 1;
+  z-index: 1;
+}
+
+.player-video-check {
+  position: absolute;
+  bottom: 0;
+  width: 90px;
+  height: 90px;
+}
+.player-video-check img {
+  width: 100%;
+  height: 100%;
+}
+
+.center-column-display {
+  width: 310px;
+  height: 100%;
+  background: black;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
   align-items: center;
-  background: #000;
+  text-align: center;
 }
 
-.match-score,
-.round-info {
-  width: 100%;
-  text-align: center;
+.center-column-display > div {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-}
-
-.label {
-  font-size: 2rem;
-}
-.score-text {
-  font-size: 6rem;
-}
-.timer {
   width: 100%;
-  font-size: 7rem;
-  background: #ffff00;
-  color: #000;
-  padding: 20px 0;
-  text-align: center;
-}
-.round-number {
-  font-size: 4rem;
 }
 
-/* --- STYLES FOR VIDEO CHECK --- */
-.video-check-indicator {
+.match-round-points,
+.round-number-display {
+  font-size: clamp(2rem, 4.4vw, 44px);
+  line-height: 1.1;
+}
+
+.timer-background {
+  background: #ffee00;
+  color: black;
+  font-size: clamp(2.5rem, 5vw, 50px);
+}
+
+/* Gam-Jeom Section */
+.gam-jeom-container {
+  width: 100%;
+  height: 15%; /* 140px on 900px */
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 10px;
-  padding: 5px 10px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
+  padding: 0 2%;
 }
 
-.blinking-light {
-  width: 20px;
-  height: 20px;
-  background-color: #ffc700;
-  border-radius: 50%;
-  box-shadow: 0 0 10px #ffc700, 0 0 20px #ffc700;
-  animation: blink 1s linear infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.2;
-  }
+.gam-jeom-number {
+  font-size: clamp(1.9rem, 3.8vw, 38px);
+  text-align: center;
+  line-height: 1.2;
 }
