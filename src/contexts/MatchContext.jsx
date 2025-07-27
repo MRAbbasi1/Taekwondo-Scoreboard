@@ -559,6 +559,7 @@ export const MatchProvider = ({ children }) => {
   }, [matchState.status]);
 
   const skipRest = useCallback(() => {
+    playSound(startSound);
     _setMatchState((prev) => ({
       ...prev,
       isRestPeriod: false,
@@ -639,6 +640,11 @@ export const MatchProvider = ({ children }) => {
           `Rest period over. Round ${matchState.round} is ready.`,
           "info"
         );
+
+        setTimeout(() => {
+          playSound(startSound);
+        }, 1000);
+
         _setMatchState((prev) => ({
           ...prev,
           isRestPeriod: false,
@@ -655,6 +661,7 @@ export const MatchProvider = ({ children }) => {
     matchState.round,
     endRoundAndAwardWinner,
     setNotification,
+    startSound,
   ]);
 
   const value = {
