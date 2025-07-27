@@ -246,7 +246,7 @@
 .timer-background {
   background: #ffee00;
   color: black;
-  font-size: clamp(2.5rem, 3.5vw, 50px); /* Adjusted vw */
+  font-size: clamp(2.5rem, 3.5vw, 60px); /* Adjusted vw */
 }
 
 /* Gam-Jeom Section - UPDATED */
