@@ -217,7 +217,7 @@
 }
 
 .center-column-display {
-  width: 310px;
+  width: 400px;
   height: 100%;
   background: black;
   display: flex;
@@ -234,6 +234,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  line-height: 1.5;
 }
 
 .match-round-points,
