@@ -550,7 +550,7 @@ button:disabled {
 
 .action-button:hover {
   background: var(--hover-overlay);
-  border-color: var(--blue-primary);
+  border-color: var(--yellow-primary);
   box-shadow: var(--shadow-lg);
 }
 
@@ -597,6 +597,7 @@ button:disabled {
   background: var(--hover-overlay);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  border: 2px solid var(--yellow-primary);
 }
 
 .base-point-selectors button.selected {

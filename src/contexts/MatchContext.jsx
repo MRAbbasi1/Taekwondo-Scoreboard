@@ -355,19 +355,35 @@ export const MatchProvider = ({ children }) => {
           setNotification("Cannot score during rest period.", "error");
           return;
         }
-        playSound(penaltySound);
+
         setMatchState((prev) => {
           const currentBreakdown = { ...prev[player].pointsBreakdown };
+
           if (operation === "add") {
-            currentBreakdown.bodyKick++;
-            setNotification("-2 points for body kick.", "error");
-          } else if (operation === "remove" && currentBreakdown.bodyKick > 0) {
-            currentBreakdown.bodyKick--;
-            setNotification("Body kick deduction removed.", "info");
+            if (currentBreakdown.body > 0) {
+              playSound(penaltySound);
+              currentBreakdown.bodyKick++;
+              setNotification("-2 points for body kick.", "error");
+            } else {
+              setNotification(
+                "A regular +2 body point must be registered first.",
+                "error"
+              );
+              return prev;
+            }
+          } else if (operation === "remove") {
+            if (currentBreakdown.bodyKick > 0) {
+              playSound(penaltySound);
+              currentBreakdown.bodyKick--;
+              setNotification("Body kick deduction removed.", "info");
+            } else {
+              setNotification(`No body kick to remove.`, "error");
+              return prev;
+            }
           } else {
-            setNotification(`No body kick to remove.`, "error");
             return prev;
           }
+
           return {
             ...prev,
             [player]: {
