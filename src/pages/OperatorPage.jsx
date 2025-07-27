@@ -1,19 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useMatch } from "../contexts/MatchContext";
 import "../styles/operator.css";
 import DisplayPage from "./DisplayPage"; // Import the new DisplayPage for preview
 
-// This is a placeholder for your country data.
-// In a real app, you might fetch this or have it in a separate file.
-const countries = [
-  { name: "Select Country", code: "N/A", flag: "" },
-  { name: "Iran", code: "IR", flag: "iran.png" },
-  { name: "Germany", code: "GER", flag: "germany.png" },
-  { name: "USA", code: "USA", flag: "usa.png" },
-  { name: "South Korea", code: "KOR", flag: "korea.png" },
-  { name: "China", code: "CHN", flag: "china.png" },
-  { name: "Russia", code: "RUS", flag: "russia.png" },
-];
+// NEW: Import libraries for country selection
+import Select from "react-select";
+import countryList from "react-select-country-list";
 
 const TimerEditor = ({ currentSeconds, onSave, onCancel, title }) => {
   const [minutes, setMinutes] = useState(
@@ -72,18 +64,52 @@ const MatchInfoModal = ({ onSave, onCancel, currentInfo }) => {
     redCountry: currentInfo.redCountry,
   });
 
+  // NEW: Get country options for the select dropdown
+  const countryOptions = useMemo(() => countryList().getData(), []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setMatchData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCountryChange = (player, countryCode) => {
-    const country = countries.find((c) => c.code === countryCode);
-    setMatchData((prev) => ({ ...prev, [`${player}Country`]: country }));
+  // NEW: Handle country change from react-select
+  const handleCountryChange = (player, selectedOption) => {
+    setMatchData((prev) => ({ ...prev, [`${player}Country`]: selectedOption }));
   };
 
   const handleSave = () => {
     onSave(matchData);
+  };
+
+  // NEW: Custom styles for react-select to match the dark theme
+  const customSelectStyles = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: "#1a1f25",
+      borderColor: "#5a646c",
+      color: "#e1e1e1",
+    }),
+    menu: (provided) => ({
+      ...provided,
+      backgroundColor: "#2c343a",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected
+        ? "#0088ff"
+        : state.isFocused
+        ? "#4a545c"
+        : "#2c343a",
+      color: "#e1e1e1",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: "#e1e1e1",
+    }),
+    input: (provided) => ({
+      ...provided,
+      color: "#e1e1e1",
+    }),
   };
 
   return (
@@ -111,16 +137,13 @@ const MatchInfoModal = ({ onSave, onCancel, currentInfo }) => {
           </div>
           <div className="form-group">
             <label>Blue Player Country</label>
-            <select
-              value={matchData.blueCountry.code}
-              onChange={(e) => handleCountryChange("blue", e.target.value)}
-            >
-              {countries.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            {/* UPDATED: Replaced <select> with <Select> from react-select */}
+            <Select
+              options={countryOptions}
+              value={matchData.blueCountry}
+              onChange={(option) => handleCountryChange("blue", option)}
+              styles={customSelectStyles}
+            />
           </div>
           <div className="form-group">
             <label>Red Player Name</label>
@@ -133,16 +156,13 @@ const MatchInfoModal = ({ onSave, onCancel, currentInfo }) => {
           </div>
           <div className="form-group">
             <label>Red Player Country</label>
-            <select
-              value={matchData.redCountry.code}
-              onChange={(e) => handleCountryChange("red", e.target.value)}
-            >
-              {countries.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            {/* UPDATED: Replaced <select> with <Select> from react-select */}
+            <Select
+              options={countryOptions}
+              value={matchData.redCountry}
+              onChange={(option) => handleCountryChange("red", option)}
+              styles={customSelectStyles}
+            />
           </div>
         </div>
         <div className="modal-buttons">

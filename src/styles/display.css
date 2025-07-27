@@ -120,8 +120,8 @@
 }
 
 .player-flag {
-  width: 125px;
-  height: 75px;
+  width: 200px !important;
+  height: 150px !important;
   border-radius: 8px;
   object-fit: cover;
 }

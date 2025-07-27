@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "../styles/display.css";
 
+// NEW: Import the flag component
+import ReactCountryFlag from "react-country-flag";
+
 // Import images from the specified asset path
 import worldTaekwondoLogo from "../assets/picture/world-taekwondo-federation.png";
 import daedoLogo from "../assets/picture/DAEDO_logo.png";
@@ -117,14 +120,19 @@ const DisplayPage = ({ externalMatchState }) => {
         <div className="player-body-background blue-body-background">
           <div className="flags-and-names">
             <div className="player-info-box">
-              <img
-                src={`src/assets/picture/${matchState.blueCountry.flag}`}
-                alt={matchState.blueCountry.name}
-                className="player-flag"
-              />
+              {/* UPDATED: Replaced <img> with <ReactCountryFlag> */}
+              {matchState.blueCountry.value && (
+                <ReactCountryFlag
+                  countryCode={matchState.blueCountry.value}
+                  svg
+                  className="player-flag"
+                  style={{ width: "100%", height: "100%" }}
+                  alt={matchState.blueCountry.label}
+                />
+              )}
               <div className="player-name-country">
                 <span className="player-country-code">
-                  {matchState.blueCountry.code}
+                  {matchState.blueCountry.value}
                 </span>
                 <span className="player-name">{matchState.bluePlayerName}</span>
               </div>
@@ -177,15 +185,20 @@ const DisplayPage = ({ externalMatchState }) => {
             <div className="player-info-box">
               <div className="player-name-country">
                 <span className="player-country-code">
-                  {matchState.redCountry.code}
+                  {matchState.redCountry.value}
                 </span>
                 <span className="player-name">{matchState.redPlayerName}</span>
               </div>
-              <img
-                src={`src/assets/picture/${matchState.redCountry.flag}`}
-                alt={matchState.redCountry.name}
-                className="player-flag"
-              />
+              {/* UPDATED: Replaced <img> with <ReactCountryFlag> */}
+              {matchState.redCountry.value && (
+                <ReactCountryFlag
+                  countryCode={matchState.redCountry.value}
+                  svg
+                  className="player-flag"
+                  style={{ width: "100%", height: "100%" }}
+                  alt={matchState.redCountry.label}
+                />
+              )}
             </div>
           </div>
           <div className="main-content">

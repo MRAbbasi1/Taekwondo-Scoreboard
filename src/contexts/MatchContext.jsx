@@ -79,8 +79,9 @@ export const MatchProvider = ({ children }) => {
     matchName: "e.g: Match Name - 65kg",
     bluePlayerName: "BLUE PLAYER",
     redPlayerName: "RED PLAYER",
-    blueCountry: { name: "Country", code: "N/A", flag: "" },
-    redCountry: { name: "Country", code: "N/A", flag: "" },
+    // UPDATED: Country object structure for react-select
+    blueCountry: { value: "", label: "Country" },
+    redCountry: { value: "", label: "Country" },
     totalHeadHits: 0,
     totalBodyHits: 0,
     isMatchInfoSet: false,
