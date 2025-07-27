@@ -278,7 +278,7 @@ const CentralPointSelection = ({
         </button>
       </div>
       <div className="sub-point-selectors">
-        {(selectedBase === "body" || selectedBase === "head") && (
+        {selectedBase === "body" && (
           <>
             <button
               className={selectedSub === "bodyTechnical" ? "selected" : ""}
