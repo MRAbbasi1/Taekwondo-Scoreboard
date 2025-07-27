@@ -8,12 +8,13 @@ import React, {
 } from "react";
 
 // Assuming audio files are in the correct path
-import startSoundSrc from "../assets/audio/B1.wav";
-import scoreSoundSrc from "../assets/audio/B2.wav";
-import tenSecondSoundSrc from "../assets/audio/B1.wav";
-import endSoundSrc from "../assets/audio/time.wav";
-import penaltySoundSrc from "../assets/audio/B1.wav";
-import restCountdownSoundSrc from "../assets/audio/B1.wav";
+import startSoundSrc from "../assets/audio/new round before start.wav";
+import scoreSoundSrc from "../assets/audio/score sound.wav";
+// import tenSecondSoundSrc from "../assets/audio/B1.wav";
+import endSoundSrc from "../assets/audio/end round or timer.wav";
+// import penaltySoundSrc from "../assets/audio/B1.wav";
+import restCountdownSoundSrc from "../assets/audio/rest last 5 secound.wav";
+import gamJeomSoundSrc from "../assets/audio/gam-jeom sound.wav";
 
 const channel = new BroadcastChannel("taekwondo_scoreboard");
 const MatchContext = createContext();
@@ -52,10 +53,11 @@ const calculateOpponentGamJeomScore = (opponentState) => {
 export const MatchProvider = ({ children }) => {
   const startSound = useRef(new Audio(startSoundSrc));
   const scoreSound = useRef(new Audio(scoreSoundSrc));
-  const tenSecondSound = useRef(new Audio(tenSecondSoundSrc));
+  // const tenSecondSound = useRef(new Audio(tenSecondSoundSrc));
   const endSound = useRef(new Audio(endSoundSrc));
-  const penaltySound = useRef(new Audio(penaltySoundSrc));
+  // const penaltySound = useRef(new Audio(penaltySoundSrc));
   const restCountdownSound = useRef(new Audio(restCountdownSoundSrc));
+  const gamJeomSound = useRef(new Audio(gamJeomSoundSrc));
 
   const playSound = (audioRef) => {
     audioRef.current.currentTime = 0;
@@ -374,7 +376,7 @@ export const MatchProvider = ({ children }) => {
 
           if (operation === "add") {
             if (currentBreakdown.body > 0) {
-              playSound(penaltySound);
+              // playSound(penaltySound);
               currentBreakdown.bodyKick++;
               setNotification("-2 points for body kick.", "error");
             } else {
@@ -386,7 +388,7 @@ export const MatchProvider = ({ children }) => {
             }
           } else if (operation === "remove") {
             if (currentBreakdown.bodyKick > 0) {
-              playSound(penaltySound);
+              // playSound(penaltySound);
               currentBreakdown.bodyKick--;
               setNotification("Body kick deduction removed.", "info");
             } else {
@@ -467,7 +469,8 @@ export const MatchProvider = ({ children }) => {
           setNotification("Cannot give penalty during rest period.", "error");
           return;
         }
-        playSound(penaltySound);
+        // playSound(penaltySound);
+        playSound(gamJeomSound);
         setMatchState((prev) => {
           const currentGamJeom = prev[player].gamJeom;
           let newPlayerGamJeom;
@@ -612,7 +615,7 @@ export const MatchProvider = ({ children }) => {
           if (!prev.isTimerRunning || prev.timer <= 0) return prev;
           const newTimer = Math.max(0, prev.timer - intervalRate);
           if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
-            playSound(tenSecondSound);
+            // playSound(tenSecondSound);
           }
           if (prev.isRestPeriod && prev.timer > 0) {
             const previousSecond = Math.ceil(prev.timer / 1000);
