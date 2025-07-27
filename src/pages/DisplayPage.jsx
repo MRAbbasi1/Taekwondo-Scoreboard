@@ -119,24 +119,21 @@ const DisplayPage = ({ externalMatchState }) => {
         {/* Blue Player Section */}
         <div className="player-body-background blue-body-background">
           <div className="flags-and-names">
-            <div className="player-info-box">
-              {/* UPDATED: Replaced <img> with <ReactCountryFlag> */}
+            {/* UPDATED: Restructured for correct layout */}
+            <div className="player-identity">
               {matchState.blueCountry.value && (
                 <ReactCountryFlag
                   countryCode={matchState.blueCountry.value}
                   svg
                   className="player-flag"
-                  style={{ width: "100%", height: "100%" }}
                   alt={matchState.blueCountry.label}
                 />
               )}
-              <div className="player-name-country">
-                <span className="player-country-code">
-                  {matchState.blueCountry.value}
-                </span>
-                <span className="player-name">{matchState.bluePlayerName}</span>
-              </div>
+              <span className="player-country-code">
+                {matchState.blueCountry.value}
+              </span>
             </div>
+            <span className="player-name">{matchState.bluePlayerName}</span>
           </div>
           <div className="main-content">
             <PointsBreakdownDisplay breakdown={blue.pointsBreakdown} />
@@ -182,23 +179,20 @@ const DisplayPage = ({ externalMatchState }) => {
         {/* Red Player Section */}
         <div className="player-body-background red-body-background">
           <div className="flags-and-names">
-            <div className="player-info-box">
-              <div className="player-name-country">
-                <span className="player-country-code">
-                  {matchState.redCountry.value}
-                </span>
-                <span className="player-name">{matchState.redPlayerName}</span>
-              </div>
-              {/* UPDATED: Replaced <img> with <ReactCountryFlag> */}
+            {/* UPDATED: Restructured for correct layout (order swapped) */}
+            <span className="player-name">{matchState.redPlayerName}</span>
+            <div className="player-identity">
               {matchState.redCountry.value && (
                 <ReactCountryFlag
                   countryCode={matchState.redCountry.value}
                   svg
                   className="player-flag"
-                  style={{ width: "100%", height: "100%" }}
                   alt={matchState.redCountry.label}
                 />
               )}
+              <span className="player-country-code">
+                {matchState.redCountry.value}
+              </span>
             </div>
           </div>
           <div className="main-content">

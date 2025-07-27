@@ -14,7 +14,7 @@
 /* Header Section */
 .header {
   width: 100%;
-  height: 10vh; /* 100px on a 1000px height screen */
+  height: 10vh; /* vh is ok here as header height is relative to screen */
   position: absolute;
   top: 0;
   left: 0;
@@ -39,7 +39,7 @@
 }
 
 .match-name {
-  font-size: clamp(1.5rem, 3.6vw, 36px);
+  font-size: clamp(1.5rem, 2.5vw, 36px); /* Adjusted vw for better scaling */
   text-align: center;
 }
 
@@ -70,14 +70,14 @@
 
 .hit-counter-number {
   position: relative;
-  font-size: clamp(1.8rem, 3.6vw, 36px);
+  font-size: clamp(1.8rem, 2.5vw, 36px); /* Adjusted vw */
   z-index: 1;
 }
 
 /* Body Section */
 .body-container {
   width: 100%;
-  height: 90vh; /* 900px on a 1000px height screen */
+  height: 90vh; /* vh is ok here */
   position: absolute;
   top: 10vh;
   left: 0;
@@ -91,7 +91,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px;
   box-sizing: border-box;
 }
 
@@ -103,58 +102,52 @@
   background: linear-gradient(180deg, #750002 0%, #2d0001 100%);
 }
 
-/* Player Info (Flags and Names) */
+/* Player Info (Flags and Names) - UPDATED */
 .flags-and-names {
   width: 100%;
-  height: 15%; /* 150px on 900px */
+  height: 15%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
-.player-info-box {
+.player-identity {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 5px;
 }
 
 .player-flag {
-  width: 200px !important;
-  height: 150px !important;
+  width: 175px !important;
+  height: 115px !important;
   border-radius: 8px;
   object-fit: cover;
-}
-
-.player-name-country {
-  display: flex;
-  flex-direction: column;
-}
-
-.player-name {
-  font-size: clamp(1.8rem, 3.6vw, 36px);
+  margin-top: 33%;
 }
 
 .player-country-code {
-  font-size: clamp(1.4rem, 2.8vw, 28px);
+  font-size: clamp(1.4rem, 2vw, 28px); /* Adjusted vw */
 }
 
-.red-body-background .player-info-box {
-  flex-direction: row-reverse;
-}
-.red-body-background .player-name-country {
-  text-align: right;
+.player-name {
+  text-align: center;
+  font-size: clamp(1.8rem, 2.5vw, 36px);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 65%;
 }
 
 /* Main Content Area */
 .main-content {
   width: 100%;
-  height: 70%; /* 600px on 900px */
+  height: 70%;
   display: flex;
-  justify-content: center;
+  /* UPDATED: Pushes score to center, icons to edge */
+  justify-content: space-between;
   align-items: center;
-  gap: 1%;
-  padding: 0 2%;
 }
 
 .points-icons-container {
@@ -163,6 +156,8 @@
   justify-content: center;
   gap: 10px;
   width: 100px;
+  margin-left: 50px;
+  margin-right: 50px;
 }
 
 .points-icon-item {
@@ -205,7 +200,7 @@
 }
 
 .player-game-point {
-  font-size: clamp(15rem, 27.5vw, 275px);
+  font-size: clamp(15rem, 20vw, 275px); /* Adjusted vw */
   line-height: 1;
   z-index: 1;
 }
@@ -243,28 +238,36 @@
 
 .match-round-points,
 .round-number-display {
-  font-size: clamp(2rem, 4.4vw, 44px);
+  font-size: clamp(2rem, 3vw, 44px); /* Adjusted vw */
   line-height: 1.1;
 }
 
 .timer-background {
   background: #ffee00;
   color: black;
-  font-size: clamp(2.5rem, 5vw, 50px);
+  font-size: clamp(2.5rem, 3.5vw, 50px); /* Adjusted vw */
 }
 
-/* Gam-Jeom Section */
+/* Gam-Jeom Section - UPDATED */
 .gam-jeom-container {
   width: 100%;
-  height: 15%; /* 140px on 900px */
+  height: 15%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 2%;
+  box-sizing: border-box;
+}
+
+/* Position blue gam-jeom left, red gam-jeom right */
+.blue-body-background .gam-jeom-container {
+  justify-content: flex-start;
+}
+.red-body-background .gam-jeom-container {
+  justify-content: flex-end;
 }
 
 .gam-jeom-number {
-  font-size: clamp(1.9rem, 3.8vw, 38px);
+  font-size: clamp(1.9rem, 2.6vw, 38px); /* Adjusted vw */
   text-align: center;
   line-height: 1.2;
 }
