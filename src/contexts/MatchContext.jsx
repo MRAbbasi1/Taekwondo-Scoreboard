@@ -621,7 +621,11 @@ export const MatchProvider = ({ children }) => {
           if (prev.isRestPeriod && prev.timer > 0) {
             const previousSecond = Math.ceil(prev.timer / 1000);
             const currentSecond = Math.ceil(newTimer / 1000);
-            if (currentSecond < previousSecond && currentSecond <= 5) {
+            if (
+              currentSecond < previousSecond &&
+              currentSecond <= 5 &&
+              currentSecond > 0
+            ) {
               playSound(restCountdownSound);
             }
           }
