@@ -49,7 +49,10 @@ const FormattedTimer = ({ milliseconds, isRestPeriod }) => {
   const minutes = Math.floor(totalSeconds / 60);
   const secs = totalSeconds % 60;
 
-  if (totalSeconds < 10 && !isRestPeriod && milliseconds > 0) {
+  if (
+    (!isRestPeriod && totalSeconds < 10 && milliseconds > 0) ||
+    (isRestPeriod && totalSeconds < 5 && milliseconds > 0)
+  ) {
     const ms = Math.floor((milliseconds % 1000) / 10)
       .toString()
       .padStart(2, "0");

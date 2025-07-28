@@ -609,18 +609,21 @@ export const MatchProvider = ({ children }) => {
 
   useEffect(() => {
     if (matchState.isTimerRunning) {
-      const isFastMode = matchState.timer <= 10000 && !matchState.isRestPeriod;
+      const isFastMode =
+        (!matchState.isRestPeriod && matchState.timer <= 10000) ||
+        (matchState.isRestPeriod && matchState.timer <= 5000);
+
       const intervalRate = isFastMode ? 47 : 250;
+
       timerRef.current = setInterval(() => {
         _setMatchState((prev) => {
           if (!prev.isTimerRunning || prev.timer <= 0) return prev;
           const newTimer = Math.max(0, prev.timer - intervalRate);
-          if (!prev.isRestPeriod && prev.timer > 10000 && newTimer <= 10000) {
-            // playSound(tenSecondSound);
-          }
+
           if (prev.isRestPeriod && prev.timer > 0) {
             const previousSecond = Math.ceil(prev.timer / 1000);
             const currentSecond = Math.ceil(newTimer / 1000);
+
             if (
               currentSecond < previousSecond &&
               currentSecond <= 5 &&
